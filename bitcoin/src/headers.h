@@ -89,8 +89,4 @@
 #include "bignum.h"
 #include "base58.h"
 #include "main.h"
-#ifdef QT_GUI
-#include "qtui.h"
-#else
 #include "noui.h"
-#endif

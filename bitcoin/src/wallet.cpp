@@ -267,7 +267,6 @@ bool CWallet::AddToWallet(const CWalletTx& wtxIn)
         if (fInsertedNew || fUpdated)
             if (!wtx.WriteToDisk())
                 return false;
-#ifndef QT_GUI
         // If default receiving address gets used, replace it with a new one
         CScript scriptDefaultKey;
         scriptDefaultKey.SetBitcoinAddress(vchDefaultKey);
@@ -283,7 +282,6 @@ bool CWallet::AddToWallet(const CWalletTx& wtxIn)
                 }
             }
         }
-#endif
         // Notify UI
         vWalletUpdated.push_back(hash);
 

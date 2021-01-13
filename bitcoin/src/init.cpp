@@ -12,16 +12,6 @@
 #include <boost/filesystem/fstream.hpp>
 #include <boost/interprocess/sync/file_lock.hpp>
 
-#if defined(BITCOIN_NEED_QT_PLUGINS) && !defined(_BITCOIN_QT_PLUGINS_INCLUDED)
-#define _BITCOIN_QT_PLUGINS_INCLUDED
-#define __INSURE__
-#include <QtPlugin>
-Q_IMPORT_PLUGIN(qcncodecs)
-Q_IMPORT_PLUGIN(qjpcodecs)
-Q_IMPORT_PLUGIN(qtwcodecs)
-Q_IMPORT_PLUGIN(qkrcodecs)
-Q_IMPORT_PLUGIN(qtaccessiblewidgets)
-#endif
 
 using namespace std;
 using namespace boost;
@@ -91,7 +81,7 @@ void HandleSIGTERM(int)
 //
 // Start
 //
-#if !defined(QT_GUI)
+
 int main(int argc, char* argv[])
 {
     bool fRet = false;
@@ -102,7 +92,7 @@ int main(int argc, char* argv[])
 
     return 1;
 }
-#endif
+
 
 bool AppInit(int argc, char* argv[])
 {
@@ -206,10 +196,7 @@ bool AppInit2(int argc, char* argv[])
 #endif
 #endif
             "  -paytxfee=<amt>  \t  "   + _("Fee per kB to add to transactions you send\n") +
-#ifdef QT_GUI
-            "  -server          \t\t  " + _("Accept command line and JSON-RPC commands\n") +
-#endif
-#if !defined(WIN32) && !defined(QT_GUI)
+#if !defined(WIN32)
             "  -daemon          \t\t  " + _("Run in the background as a daemon and accept commands\n") +
 #endif
             "  -testnet         \t\t  " + _("Use the test network\n") +
@@ -241,19 +228,14 @@ bool AppInit2(int argc, char* argv[])
 
         // Remove tabs
         strUsage.erase(std::remove(strUsage.begin(), strUsage.end(), '\t'), strUsage.end());
-#if defined(QT_GUI) && defined(WIN32)
-        // On windows, show a message box, as there is no stderr
-        wxMessageBox(strUsage, "Usage");
-#else
         fprintf(stderr, "%s", strUsage.c_str());
-#endif
         return false;
     }
 
     fTestNet = GetBoolArg("-testnet");
     fDebug = GetBoolArg("-debug");
 
-#if !defined(WIN32) && !defined(QT_GUI)
+#if !defined(WIN32)
     fDaemon = GetBoolArg("-daemon");
 #else
     fDaemon = false;
@@ -265,14 +247,11 @@ bool AppInit2(int argc, char* argv[])
         fServer = GetBoolArg("-server");
 
     /* force fServer when running without GUI */
-#if !defined(QT_GUI)
     fServer = true;
-#endif
     fPrintToConsole = GetBoolArg("-printtoconsole");
     fPrintToDebugger = GetBoolArg("-printtodebugger");
     fLogTimestamps = GetBoolArg("-logtimestamps");
 
-#ifndef QT_GUI
     for (int i = 1; i < argc; i++)
         if (!IsSwitchChar(argv[i][0]))
             fCommandLine = true;
@@ -282,9 +261,8 @@ bool AppInit2(int argc, char* argv[])
         int ret = CommandLineRPC(argc, argv);
         exit(ret);
     }
-#endif
 
-#if !defined(WIN32) && !defined(QT_GUI)
+#if !defined(WIN32)
     if (fDaemon)
     {
         // Daemonize
@@ -541,10 +519,8 @@ bool AppInit2(int argc, char* argv[])
     if (fServer)
         CreateThread(ThreadRPCServer, NULL);
 
-#if !defined(QT_GUI)
     while (1)
         Sleep(5000);
-#endif
 
     return true;
 }
