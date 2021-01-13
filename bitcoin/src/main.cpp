@@ -40,8 +40,6 @@ int64 nTimeBestReceived = 0;
 
 CMedianFilter<int> cPeerBlockCounts(5, 0); // Amount of blocks that other nodes claim to have
 
-map<uint256, CDataStream*> mapOrphanTransactions;
-multimap<uint256, CDataStream*> mapOrphanTransactionsByPrev;
 
 
 double dHashesPerSec;
@@ -146,75 +144,6 @@ void static ResendWalletTransactions()
     BOOST_FOREACH(CWallet* pwallet, setpwalletRegistered)
         pwallet->ResendWalletTransactions();
 }
-
-
-
-
-
-
-
-//////////////////////////////////////////////////////////////////////////////
-//
-// mapOrphanTransactions
-//
-
-void AddOrphanTx(const CDataStream& vMsg)
-{
-    CTransaction tx;
-    CDataStream(vMsg) >> tx;
-    uint256 hash = tx.GetHash();
-    if (mapOrphanTransactions.count(hash))
-        return;
-
-    CDataStream* pvMsg = mapOrphanTransactions[hash] = new CDataStream(vMsg);
-    BOOST_FOREACH(const CTxIn& txin, tx.vin)
-        mapOrphanTransactionsByPrev.insert(make_pair(txin.prevout.hash, pvMsg));
-}
-
-void static EraseOrphanTx(uint256 hash)
-{
-    if (!mapOrphanTransactions.count(hash))
-        return;
-    const CDataStream* pvMsg = mapOrphanTransactions[hash];
-    CTransaction tx;
-    CDataStream(*pvMsg) >> tx;
-    BOOST_FOREACH(const CTxIn& txin, tx.vin)
-    {
-        for (multimap<uint256, CDataStream*>::iterator mi = mapOrphanTransactionsByPrev.lower_bound(txin.prevout.hash);
-             mi != mapOrphanTransactionsByPrev.upper_bound(txin.prevout.hash);)
-        {
-            if ((*mi).second == pvMsg)
-                mapOrphanTransactionsByPrev.erase(mi++);
-            else
-                mi++;
-        }
-    }
-    delete pvMsg;
-    mapOrphanTransactions.erase(hash);
-}
-
-int LimitOrphanTxSize(int nMaxOrphans)
-{
-    int nEvicted = 0;
-    while (mapOrphanTransactions.size() > nMaxOrphans)
-    {
-        // Evict a random orphan:
-        std::vector<unsigned char> randbytes(32);
-        RAND_bytes(&randbytes[0], 32);
-        uint256 randomhash(randbytes);
-        map<uint256, CDataStream*>::iterator it = mapOrphanTransactions.lower_bound(randomhash);
-        if (it == mapOrphanTransactions.end())
-            it = mapOrphanTransactions.begin();
-        EraseOrphanTx(it->first);
-        ++nEvicted;
-    }
-    return nEvicted;
-}
-
-
-
-
-
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1731,7 +1660,7 @@ bool static AlreadyHave(CTxDB& txdb, const CInv& inv)
 {
     switch (inv.type)
     {
-    case MSG_TX:    return mapTransactions.count(inv.hash) || mapOrphanTransactions.count(inv.hash) || txdb.ContainsTx(inv.hash);
+    case MSG_TX:    return mapTransactions.count(inv.hash) || txdb.ContainsTx(inv.hash);
     case MSG_BLOCK: return mapBlockIndex.count(inv.hash);
     }
     // Don't know what it is, just say we already got one
@@ -2108,43 +2037,10 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             RelayMessage(inv, vMsg);
             mapAlreadyAskedFor.erase(inv);
             vWorkQueue.push_back(inv.hash);
-
-            // Recursively process any orphan transactions that depended on this one
-            for (int i = 0; i < vWorkQueue.size(); i++)
-            {
-                uint256 hashPrev = vWorkQueue[i];
-                for (multimap<uint256, CDataStream*>::iterator mi = mapOrphanTransactionsByPrev.lower_bound(hashPrev);
-                     mi != mapOrphanTransactionsByPrev.upper_bound(hashPrev);
-                     ++mi)
-                {
-                    const CDataStream& vMsg = *((*mi).second);
-                    CTransaction tx;
-                    CDataStream(vMsg) >> tx;
-                    CInv inv(MSG_TX, tx.GetHash());
-
-                    if (tx.AcceptToMemoryPool(true))
-                    {
-                        printf("   accepted orphan tx %s\n", inv.hash.ToString().substr(0,10).c_str());
-                        SyncWithWallets(tx, NULL, true);
-                        RelayMessage(inv, vMsg);
-                        mapAlreadyAskedFor.erase(inv);
-                        vWorkQueue.push_back(inv.hash);
-                    }
-                }
-            }
-
-            BOOST_FOREACH(uint256 hash, vWorkQueue)
-                EraseOrphanTx(hash);
         }
         else if (fMissingInputs)
         {
-            printf("storing orphan tx %s\n", inv.hash.ToString().substr(0,10).c_str());
-            AddOrphanTx(vMsg);
-
-            // DoS prevention: do not allow mapOrphanTransactions to grow unbounded
-            int nEvicted = LimitOrphanTxSize(MAX_ORPHAN_TRANSACTIONS);
-            if (nEvicted > 0)
-                printf("mapOrphan overflow, removed %d tx\n", nEvicted);
+            printf("REJECTED orphan tx %s\n", inv.hash.ToString().substr(0,10).c_str());
         }
         if (tx.nDoS) pfrom->Misbehaving(tx.nDoS);
     }
