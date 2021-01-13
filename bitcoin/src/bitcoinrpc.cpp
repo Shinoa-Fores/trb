@@ -1782,12 +1782,39 @@ Value getmemorypool(const Array& params, bool fHelp)
 }
 
 
+Value dumpblock(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() < 1 || params.size() > 2)
+        throw runtime_error(
+            "dumpblock <height> <filename>\n"
+            "Emit the block at <height> to <filename>.");
 
+    int want_height = 0;
+    if (params.size() > 0)
+        want_height = params[0].get_int();
 
+    if (want_height > nBestHeight)
+        throw runtime_error("Requested block exceeds current nBestHeight!\n");
 
+    // path to dump block to
+    string filename = params[1].get_str();
 
-
-
+    // this is O(n^2)...
+    // possibly could be improved if we descend from best height if requested height is closer to it
+    for (map<uint256, CBlockIndex*>::iterator mi = mapBlockIndex.begin(); mi != mapBlockIndex.end(); ++mi)
+    {
+        CBlockIndex *pindex = (*mi).second;
+	if (pindex->nHeight == want_height) {
+	    CBlock block;
+	    block.ReadFromDisk(pindex);
+	    printf("Dumping block %d to %s\n", want_height, filename.c_str());
+	    CAutoFile fileout = fopen(filename.c_str(), "wb+");
+	    fileout << block;
+	    return true;
+	}
+    }
+    return false;
+}
 
 
 
@@ -1837,6 +1864,7 @@ pair<string, rpcfn_type> pCallTable[] =
     make_pair("settxfee",               &settxfee),
     make_pair("getmemorypool",          &getmemorypool),
     make_pair("listsinceblock",        &listsinceblock),
+    make_pair("dumpblock",              &dumpblock),
 };
 map<string, rpcfn_type> mapCallTable(pCallTable, pCallTable + sizeof(pCallTable)/sizeof(pCallTable[0]));
 
@@ -1863,6 +1891,7 @@ string pAllowInSafeMode[] =
     "validateaddress",
     "getwork",
     "getmemorypool",
+    "dumpblock",
 };
 set<string> setAllowInSafeMode(pAllowInSafeMode, pAllowInSafeMode + sizeof(pAllowInSafeMode)/sizeof(pAllowInSafeMode[0]));
 
@@ -2364,6 +2393,7 @@ int CommandLineRPC(int argc, char *argv[])
         if (strMethod == "listaccounts"           && n > 0) ConvertTo<boost::int64_t>(params[0]);
         if (strMethod == "walletpassphrase"       && n > 1) ConvertTo<boost::int64_t>(params[1]);
         if (strMethod == "listsinceblock"         && n > 1) ConvertTo<boost::int64_t>(params[1]);
+	if (strMethod == "dumpblock"              && n > 0) ConvertTo<boost::int64_t>(params[0]);
         if (strMethod == "sendmany"               && n > 1)
         {
             string s = params[1].get_str();
