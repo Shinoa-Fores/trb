@@ -578,7 +578,7 @@ bool CTxDB::LoadBlockIndex()
     pindexBest = mapBlockIndex[hashBestChain];
     nBestHeight = pindexBest->nHeight;
     bnBestChainWork = pindexBest->bnChainWork;
-    printf("LoadBlockIndex(): hashBestChain=%s  height=%d\n", hashBestChain.ToString().substr(0,20).c_str(), nBestHeight);
+    printf("LoadBlockIndex(): hashBestChain=%s  height=%d\n", hashBestChain.ToString().c_str(), nBestHeight);
 
     // Load bnBestInvalidWork, OK if it doesn't exist
     ReadBestInvalidWork(bnBestInvalidWork);
@@ -836,14 +836,6 @@ int CWalletDB::LoadWallet(CWallet* pwallet)
                     }
                     vWalletUpgrade.push_back(hash);
                 }
-
-                //// debug print
-                //printf("LoadWallet  %s\n", wtx.GetHash().ToString().c_str());
-                //printf(" %12I64d  %s  %s  %s\n",
-                //    wtx.vout[0].nValue,
-                //    DateTimeStrFormat("%x %H:%M:%S", wtx.GetBlockTime()).c_str(),
-                //    wtx.hashBlock.ToString().substr(0,20).c_str(),
-                //    wtx.mapValue["message"].c_str());
             }
             else if (strType == "acentry")
             {

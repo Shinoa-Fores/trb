@@ -1,4 +1,33 @@
+542413 genesis mod6 TRB Genesis
+542413 bitcoin-asciilifeform.1 asciilifeform QT_GUI removal
+542413 rm_rf_upnp ben_vulpes Removal of UPnP
+542413 bitcoin-asciilifeform.2 asciilifeform Removal of SSL from http service
+542413 bitcoin-asciilifeform.3-turdmeister-alert-snip asciilifeform Removal of alert spam
+542413 bitcoin-asciilifeform.4-goodbye-win32 asciilifeform Win32 removal
+542413 asciilifeform_orphanage_thermonuke asciilifeform Drop orphans on the floor
+542413 asciilifeform_tx-orphanage_amputation asciilifeform Remove orphan processing
+542413 asciilifeform_dnsseed_snipsnip asciilifeform Abandon the DNS seeding mechanism
+542413 bitcoin-v0_5_3-db_config mod6 Add BDB configuration options
+542413 asciilifeform_zap_hardcoded_seeds asciilifeform Remove hardcoded node seeds
+542413 bitcoin-v0_5_3_1-static_makefile_v002.8 mod6 Add static makefile options
+542413 asciilifeform-kills-integer-retardation asciilifeform Fix integer type problems
+542413 asciilifeform_zap_showmyip_crud asciilifeform Abolishes the 'showmyip.com' idiocy; prerequisite for the total removal of all instances of DNS invocation
+542413 bitcoin-v0_5_3_1-rev_bump ben_vulpes Bump version number to 0.5.3.1
+542413 asciilifeform_and_now_we_have_block_dumper_corrected asciilifeform Add 'dumpblock' RPC command
+542413 asciilifeform_dns_thermonyukyoolar_kleansing asciilifeform Abolishes all invocations of DNS
+542413 mod6_fix_dumpblock_params mod6 Constrain the 'dumpblock' parameters
+542413 asciilifeform_ver_now_5_4_and_irc_is_gone_and_now_must_give_ip Bump version to 0.5.4; Remove IRC seeder and hooks; Removal of mechanisms for determining own external IP
+542413 asciilifeform_maxint_locks_corrected asciilifeform Set BDB configuration options to max
+542413 asciilifeform_and_now_we_have_eatblock asciilifeform Add 'eatblock' RPC command
+542413 asciilifeform_lets_lose_testnet asciilifeform Removal of Testnet
+542413 asciilifeform_add_verifyall_option asciilifeform Add 'verifyall' flag
+542413 programmable-versionstring asciilifeform Add two optional command-line flags to change the version string and number
+542413 malleus_mikehearnificarum asciilifeform Ban peers when attempting to issue unsupported commands
+542413 mod6_der_high_low_s mod6 Add command-line flags to set Low-S or High-S
+542413 makefiles mod6 Add makefiles to build entire TRB
+542413 asciilifeform_aggressive_pushgetblocks asciilifeform Issue PushGetBlocks command to any peer that issues 'version' command
 614342 trb_keccak_regrind mod6 Not a vpatch, whole TRB tree keccak regrind; removes UTF-8 char from original genesis.vpatch
 614347 mod6_privkey_tools.vpatch mod6 adds privkey tools
 614351 mod6_manifest.vpatch mod6 Adds TRB manifest; updates version comments
 616451 mod6_phexdigit_fix.vpatch mod6 Adds missing comma to separate values in the phexdigit array in util.cpp.
+617254 mod6_excise_hash_truncation mod6 Regrind of ben_vulpes original; removes truncation of hashes printed to TRB log file
