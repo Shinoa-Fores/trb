@@ -81,6 +81,7 @@ HEADERS = \
     init.h \
     key.h \
     keystore.h \
+    knobs.h \
     main.h \
     net.h \
     noui.h \

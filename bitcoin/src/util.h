@@ -121,6 +121,7 @@ extern bool fCommandLine;
 extern std::string strMiscWarning;
 extern bool fNoListen;
 extern bool fLogTimestamps;
+extern std::string CLIENT_NAME;
 
 void RandAddSeed();
 void RandAddSeedPerfmon();
@@ -161,6 +162,7 @@ void SetMockTime(int64 nMockTimeIn);
 int64 GetAdjustedTime();
 void AddTimeData(unsigned int ip, int64 nTime);
 std::string FormatFullVersion();
+std::string FormatSubVersion(const std::string& name, int nClientVersion);
 
 
 

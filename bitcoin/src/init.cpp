@@ -175,6 +175,8 @@ bool AppInit2(int argc, char* argv[])
             "  -debug           \t\t  " + _("Output extra debugging information\n") +
 	    "  -caneat          \t\t  " + _("Permit the use of 'eatblock'\n") +
 	    "  -verifyall       \t\t  " + _("Forbid the skipping of ECDSA signature verification between checkpoints.\n") +
+	    "  -setverstring    \t\t  " + _("Set a custom version string.\n") +
+	    "  -setvernum       \t\t  " + _("Set a custom version number.\n") +
             "  -logtimestamps   \t  "   + _("Prepend debug output with timestamp\n") +
             "  -printtoconsole  \t  "   + _("Send trace/debug info to console instead of debug.log file\n") +
             "  -rpcuser=<user>  \t  "   + _("Username for JSON-RPC connections\n") +
@@ -199,6 +201,16 @@ bool AppInit2(int argc, char* argv[])
     fCanEat = GetBoolArg("-caneat");
     fVerifyAll = GetBoolArg("-verifyall");
 
+    if (mapArgs.count("-setverstring"))
+    {
+        CLIENT_NAME = mapArgs["-setverstring"];
+    }
+
+    if (mapArgs.count("-setvernum"))
+    {
+        VERSION = atoi(mapArgs["-setvernum"]);
+    }
+    
     if (fDaemon)
         fServer = true;
     else

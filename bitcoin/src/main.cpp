@@ -17,6 +17,8 @@ using namespace boost;
 // Global state
 //
 
+int VERSION = DEFAULT_CLIENT_VERSION;
+
 CCriticalSection cs_setpwalletRegistered;
 set<CWallet*> setpwalletRegistered;
 

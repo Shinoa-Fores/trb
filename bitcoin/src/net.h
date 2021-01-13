@@ -360,7 +360,7 @@ public:
         CAddress addrMe = (fUseProxy || !addrLocalHost.IsRoutable() ? CAddress("0.0.0.0") : addrLocalHost);
         RAND_bytes((unsigned char*)&nLocalHostNonce, sizeof(nLocalHostNonce));
         PushMessage("version", VERSION, nLocalServices, nTime, addrYou, addrMe,
-                    nLocalHostNonce, std::string(pszSubVer), nBestHeight);
+                    nLocalHostNonce, FormatSubVersion(CLIENT_NAME, VERSION), nBestHeight);
     }
 
 

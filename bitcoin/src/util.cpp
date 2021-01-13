@@ -2,6 +2,7 @@
 // Copyright (c) 2009-2012 The Bitcoin developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file license.txt or http://www.opensource.org/licenses/mit-license.php.
+#include "knobs.h"
 #include "headers.h"
 #include "strlcpy.h"
 #include <boost/program_options/detail/config_file.hpp>
@@ -32,7 +33,7 @@ string strMiscWarning;
 bool fNoListen = false;
 bool fLogTimestamps = false;
 
-
+std::string CLIENT_NAME(DEFAULT_CLIENT_NAME);
 
 
 // Workaround for "multiple definition of `_tls_used'"
@@ -889,14 +890,18 @@ string FormatVersion(int nVersion)
 
 string FormatFullVersion()
 {
-    string s = FormatVersion(VERSION) + pszSubVer;
-    if (VERSION_IS_BETA) {
-        s += "-";
-        s += _("beta");
-    }
+    string s = FormatVersion(VERSION);
     return s;
 }
 
+std::string FormatSubVersion(const std::string& name, int nClientVersion)
+{
+    std::ostringstream ss;
+    ss << "/";
+    ss << name << ":" << FormatVersion(nClientVersion);
+    ss << "/";
+    return ss.str();
+}
 
 
 

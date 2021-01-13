@@ -24,6 +24,9 @@ typedef unsigned long long  uint64;
 
 #include <sys/mman.h>
 #include <limits.h>
+
+#include "knobs.h"
+
 /* This comes from limits.h if it's not defined there set a sane default */
 #ifndef PAGESIZE
 #include <unistd.h>
@@ -41,9 +44,7 @@ class CDataStream;
 class CAutoFile;
 static const unsigned int MAX_SIZE = 0x02000000;
 
-static const int VERSION = 50400;
-static const char* pszSubVer = "";
-static const bool VERSION_IS_BETA = true;
+extern int VERSION;
 
 // Used to bypass the rule against non-const reference to temporary
 // where it makes sense with wrappers such as CFlatData or CTxDB
