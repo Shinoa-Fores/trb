@@ -1901,6 +1901,11 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
                         pfrom->PushMessage(inv.GetCommand(), (*mi).second);
                 }
             }
+            else
+            {
+                pfrom->Misbehaving(100);
+                return error("BANNED peer issuing unknown inv type.");
+            }
 
             // Track requests for our stuff
             Inventory(inv.hash);
@@ -2103,7 +2108,9 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
     else
     {
-        // Ignore unknown commands for extensibility
+      // He who comes to us with a turd, by the turd shall perish.
+      pfrom->Misbehaving(100);
+      return error("BANNED peer issuing heathen command.");
     }
 
 
