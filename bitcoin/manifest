@@ -1,3 +1,4 @@
 614342 trb_keccak_regrind mod6 Not a vpatch, whole TRB tree keccak regrind; removes UTF-8 char from original genesis.vpatch
 614347 mod6_privkey_tools.vpatch mod6 adds privkey tools
 614351 mod6_manifest.vpatch mod6 Adds TRB manifest; updates version comments
+616451 mod6_phexdigit_fix.vpatch mod6 Adds missing comma to separate values in the phexdigit array in util.cpp.
