@@ -160,7 +160,7 @@ bool AppInit2(int argc, char* argv[])
             "  -datadir=<dir>   \t\t  " + _("Specify data directory\n") +
             "  -timeout=<n>     \t  "   + _("Specify connection timeout (in milliseconds)\n") +
             "  -proxy=<ip:port> \t  "   + _("Connect through socks4 proxy\n") +
-            "  -port=<port>     \t\t  " + _("Listen for connections on <port> (default: 8333 or testnet: 18333)\n") +
+            "  -port=<port>     \t\t  " + _("Listen for connections on <port> (default: 8333)\n") +
             "  -maxconnections=<n>\t  " + _("Maintain at most <n> connections to peers (default: 125)\n") +
             "  -myip=<ip>       \t  "   + _("Set this node's external IP address.\n") +
             "  -addnode=<ip>    \t  "   + _("Add a node to connect to\n") +
@@ -172,7 +172,6 @@ bool AppInit2(int argc, char* argv[])
             "  -maxsendbuffer=<n>\t  "   + _("Maximum per-connection send buffer, <n>*1000 bytes (default: 10000)\n") +
             "  -paytxfee=<amt>  \t  "   + _("Fee per kB to add to transactions you send\n") +
             "  -daemon          \t\t  " + _("Run in the background as a daemon and accept commands\n") +
-            "  -testnet         \t\t  " + _("Use the test network\n") +
             "  -debug           \t\t  " + _("Output extra debugging information\n") +
 	    "  -caneat          \t\t  " + _("Permit the use of 'eatblock'\n") +
             "  -logtimestamps   \t  "   + _("Prepend debug output with timestamp\n") +
@@ -194,7 +193,6 @@ bool AppInit2(int argc, char* argv[])
         return false;
     }
 
-    fTestNet = GetBoolArg("-testnet");
     fDebug = GetBoolArg("-debug");
     fDaemon = GetBoolArg("-daemon");
     fCanEat = GetBoolArg("-caneat");

@@ -252,14 +252,14 @@ public:
 };
 
 // base58-encoded bitcoin addresses
-// Addresses have version 0 or 111 (testnet)
+// Addresses have version 0
 // The data vector contains RIPEMD160(SHA256(pubkey)), where pubkey is the serialized public key
 class CBitcoinAddress : public CBase58Data
 {
 public:
     bool SetHash160(const uint160& hash160)
     {
-        SetData(fTestNet ? 111 : 0, &hash160, 20);
+        SetData(0, &hash160, 20);
         return true;
     }
 
@@ -271,20 +271,15 @@ public:
     bool IsValid() const
     {
         int nExpectedSize = 20;
-        bool fExpectTestNet = false;
         switch(nVersion)
         {
             case 0:
                 break;
 
-            case 111:
-                fExpectTestNet = true;
-                break;
-
             default:
                 return false;
         }
-        return fExpectTestNet == fTestNet && vchData.size() == nExpectedSize;
+        return vchData.size() == nExpectedSize;
     }
 
     CBitcoinAddress()
