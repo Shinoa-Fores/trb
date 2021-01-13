@@ -11,7 +11,7 @@
 542413 asciilifeform_zap_hardcoded_seeds asciilifeform Remove hardcoded node seeds
 542413 bitcoin-v0_5_3_1-static_makefile_v002.8 mod6 Add static makefile options
 542413 asciilifeform-kills-integer-retardation asciilifeform Fix integer type problems
-542413 asciilifeform_zap_showmyip_crud asciilifeform Abolishes the 'showmyip.com' idiocy; prerequisite for the total removal of all instances of DNS invocation
+542413 asciilifeform_zap_showmyip_crud asciilifeform Abolishes the 'showmyip.com' idiocy; Prerequisite for the total removal of all instances of DNS invocation
 542413 bitcoin-v0_5_3_1-rev_bump ben_vulpes Bump version number to 0.5.3.1
 542413 asciilifeform_and_now_we_have_block_dumper_corrected asciilifeform Add 'dumpblock' RPC command
 542413 asciilifeform_dns_thermonyukyoolar_kleansing asciilifeform Abolishes all invocations of DNS
@@ -26,8 +26,9 @@
 542413 mod6_der_high_low_s mod6 Add command-line flags to set Low-S or High-S
 542413 makefiles mod6 Add makefiles to build entire TRB
 542413 asciilifeform_aggressive_pushgetblocks asciilifeform Issue PushGetBlocks command to any peer that issues 'version' command
-614342 trb_keccak_regrind mod6 Not a vpatch, whole TRB tree keccak regrind; removes UTF-8 char from original genesis.vpatch
-614347 mod6_privkey_tools.vpatch mod6 adds privkey tools
-614351 mod6_manifest.vpatch mod6 Adds TRB manifest; updates version comments
-616451 mod6_phexdigit_fix.vpatch mod6 Adds missing comma to separate values in the phexdigit array in util.cpp.
-617254 mod6_excise_hash_truncation mod6 Regrind of ben_vulpes original; removes truncation of hashes printed to TRB log file
+614342 trb_keccak_regrind mod6 Not a vpatch, whole TRB tree keccak regrind; Also removes UTF-8 char from original genesis.vpatch
+614347 mod6_privkey_tools mod6 Adds privkey tools
+614351 mod6_manifest mod6 Adds TRB manifest; Updates version comments
+616451 mod6_phexdigit_fix mod6 Adds missing comma to separate values in the phexdigit array in util.cpp.
+617254 mod6_excise_hash_truncation mod6 Regrind of ben_vulpes original; Removes truncation of hashes printed to TRB log file
+617255 mod6_whogaveblox mod6 Regrind of asciilifeform original; Record the origin of every incoming candidate block (whether accepted or rejected)

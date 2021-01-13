@@ -1322,14 +1322,25 @@ bool CBlock::AcceptBlock()
 
 bool ProcessBlock(CNode* pfrom, CBlock* pblock)
 {
+    // Whose block we are trying.
+    string peer_ip;
+
+    if (pfrom != NULL) {
+      peer_ip = pfrom->addr.ToStringIP(); // if candidate block came from a peer
+    } else {
+      peer_ip = "LOCAL"; // if it came from, e.g., EatBlock
+    }
+
     // Check for duplicate
     uint256 hash = pblock->GetHash();
     if (mapBlockIndex.count(hash))
-        return error("ProcessBlock() : already have block %d %s", mapBlockIndex[hash]->nHeight, hash.ToString().c_str());
+        return error("ProcessBlock() : already have block %d %s from peer %s",
+                     mapBlockIndex[hash]->nHeight, hash.ToString().c_str(),
+                     peer_ip.c_str());
 
     // Preliminary checks
     if (!pblock->CheckBlock())
-        return error("ProcessBlock() : CheckBlock FAILED");
+      return error("ProcessBlock() : CheckBlock FAILED from peer %s", peer_ip.c_str());
 
     CBlockIndex* pcheckpoint = Checkpoints::GetLastCheckpoint(mapBlockIndex);
     if (pcheckpoint && pblock->hashPrevBlock != hashBestChain)
@@ -1340,7 +1351,8 @@ bool ProcessBlock(CNode* pfrom, CBlock* pblock)
         {
             if (pfrom)
                 pfrom->Misbehaving(100);
-            return error("ProcessBlock() : block with timestamp before last checkpoint");
+            return error("ProcessBlock() : block with timestamp before last checkpoint from peer %s",
+                         peer_ip.c_str());
         }
         CBigNum bnNewBlock;
         bnNewBlock.SetCompact(pblock->nBits);
@@ -1350,14 +1362,17 @@ bool ProcessBlock(CNode* pfrom, CBlock* pblock)
         {
             if (pfrom)
                 pfrom->Misbehaving(100);
-            return error("ProcessBlock() : block with too little proof-of-work");
+            return error("ProcessBlock() : block with too little proof-of-work from peer %s",
+                         peer_ip.c_str());
         }
     }
 
     // If don't already have its previous block, throw it out!
     if (!mapBlockIndex.count(pblock->hashPrevBlock))
     {
-        printf("ProcessBlock: BASTARD BLOCK, prev=%s, DISCARDED\n", pblock->hashPrevBlock.ToString().c_str());
+        printf("ProcessBlock: BASTARD BLOCK, prev=%s, DISCARDED from peer %s\n",
+               pblock->hashPrevBlock.ToString().c_str(),
+               peer_ip.c_str());
 
         // Ask this guy to fill in what we're missing
         if (pfrom)
@@ -1368,9 +1383,11 @@ bool ProcessBlock(CNode* pfrom, CBlock* pblock)
 
     // Store to disk
     if (!pblock->AcceptBlock())
-        return error("ProcessBlock() : AcceptBlock FAILED");
-
-    printf("ProcessBlock: ACCEPTED\n");
+        return error("ProcessBlock() : AcceptBlock FAILED from peer %s", peer_ip.c_str());
+    
+    printf("ProcessBlock: ACCEPTED block %s from: %s\n",
+           hash.ToString().c_str(), peer_ip.c_str());
+    
     return true;
 }
 
