@@ -269,10 +269,6 @@ void ThreadIRCSeed2(void* parg)
     {
         CAddress addrConnect("92.243.23.21", 6667); // irc.lfnet.org
 
-        CAddress addrIRC("irc.lfnet.org", 6667, true);
-        if (addrIRC.IsValid())
-            addrConnect = addrIRC;
-
         SOCKET hSocket;
         if (!ConnectSocket(addrConnect, hSocket))
         {

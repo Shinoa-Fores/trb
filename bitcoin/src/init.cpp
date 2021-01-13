@@ -160,7 +160,6 @@ bool AppInit2(int argc, char* argv[])
             "  -datadir=<dir>   \t\t  " + _("Specify data directory\n") +
             "  -timeout=<n>     \t  "   + _("Specify connection timeout (in milliseconds)\n") +
             "  -proxy=<ip:port> \t  "   + _("Connect through socks4 proxy\n") +
-            "  -dns             \t  "   + _("Allow DNS lookups for addnode and connect\n") +
             "  -port=<port>     \t\t  " + _("Listen for connections on <port> (default: 8333 or testnet: 18333)\n") +
             "  -maxconnections=<n>\t  " + _("Maintain at most <n> connections to peers (default: 125)\n") +
             "  -addnode=<ip>    \t  "   + _("Add a node to connect to\n") +
@@ -414,10 +413,8 @@ bool AppInit2(int argc, char* argv[])
         // Note: the GetBoolArg() calls for all of these must happen later.
         SoftSetArg("-nolisten", true);
         SoftSetArg("-noirc", true);
-        SoftSetArg("-dns", false);
     }
 
-    fAllowDNS = GetBoolArg("-dns");
     fNoListen = GetBoolArg("-nolisten");
 
     // Command-line args override in-wallet settings:
@@ -435,7 +432,7 @@ bool AppInit2(int argc, char* argv[])
     {
         BOOST_FOREACH(string strAddr, mapMultiArgs["-addnode"])
         {
-            CAddress addr(strAddr, fAllowDNS);
+            CAddress addr(strAddr);
             addr.nTime = 0; // so it won't relay unless successfully connected
             if (addr.IsValid())
                 AddAddress(addr);

@@ -29,9 +29,8 @@ bool OpenNetworkConnection(const CAddress& addrConnect);
 // Global state variables
 //
 bool fClient = false;
-bool fAllowDNS = false;
 uint64 nLocalServices = (fClient ? 0 : NODE_NETWORK);
-CAddress addrLocalHost("0.0.0.0", 0, false, nLocalServices);
+CAddress addrLocalHost("0.0.0.0", 0, nLocalServices);
 static CNode* pnodeLocalHost = NULL;
 uint64 nLocalHostNonce = 0;
 array<int, 10> vnThreadsRunning;
@@ -193,7 +192,7 @@ bool ConnectSocket(const CAddress& addrConnect, SOCKET& hSocketRet, int nTimeout
 }
 
 // portDefault is in host order
-bool Lookup(const char *pszName, vector<CAddress>& vaddr, int nServices, int nMaxSolutions, bool fAllowLookup, int portDefault, bool fAllowPort)
+bool Lookup(const char *pszName, vector<CAddress>& vaddr, int nServices, int nMaxSolutions, int portDefault, bool fAllowPort)
 {
     vaddr.clear();
     if (pszName[0] == 0)
@@ -231,33 +230,14 @@ bool Lookup(const char *pszName, vector<CAddress>& vaddr, int nServices, int nMa
         return true;
     }
 
-    if (!fAllowLookup)
-        return false;
-
-    struct hostent* phostent = gethostbyname(pszHost);
-    if (!phostent)
-        return false;
-
-    if (phostent->h_addrtype != AF_INET)
-        return false;
-
-    char** ppAddr = phostent->h_addr_list;
-    while (*ppAddr != NULL && vaddr.size() != nMaxSolutions)
-    {
-        CAddress addr(((struct in_addr*)ppAddr[0])->s_addr, port, nServices);
-        if (addr.IsValid())
-            vaddr.push_back(addr);
-        ppAddr++;
-    }
-
-    return (vaddr.size() > 0);
+    return false;
 }
 
 // portDefault is in host order
-bool Lookup(const char *pszName, CAddress& addr, int nServices, bool fAllowLookup, int portDefault, bool fAllowPort)
+bool Lookup(const char *pszName, CAddress& addr, int nServices, int portDefault, bool fAllowPort)
 {
     vector<CAddress> vaddr;
-    bool fRet = Lookup(pszName, vaddr, nServices, 1, fAllowLookup, portDefault, fAllowPort);
+    bool fRet = Lookup(pszName, vaddr, nServices, 1, portDefault, fAllowPort);
     if (fRet)
         addr = vaddr[0];
     return fRet;
@@ -1055,7 +1035,7 @@ void ThreadOpenConnections2(void* parg)
         {
             BOOST_FOREACH(string strAddr, mapMultiArgs["-connect"])
             {
-                CAddress addr(strAddr, fAllowDNS);
+                CAddress addr(strAddr);
                 if (addr.IsValid())
                     OpenNetworkConnection(addr);
                 for (int i = 0; i < 10 && i < nLoop; i++)
@@ -1073,7 +1053,7 @@ void ThreadOpenConnections2(void* parg)
     {
         BOOST_FOREACH(string strAddr, mapMultiArgs["-addnode"])
         {
-            CAddress addr(strAddr, fAllowDNS);
+            CAddress addr(strAddr);
             if (addr.IsValid())
             {
                 OpenNetworkConnection(addr);
@@ -1384,7 +1364,7 @@ bool BindListenPort(string& strError)
 void StartNode(void* parg)
 {
     if (pnodeLocalHost == NULL)
-        pnodeLocalHost = new CNode(INVALID_SOCKET, CAddress("127.0.0.1", 0, false, nLocalServices));
+        pnodeLocalHost = new CNode(INVALID_SOCKET, CAddress("127.0.0.1", 0, nLocalServices));
 
     // Get local host ip
     struct ifaddrs* myaddrs;

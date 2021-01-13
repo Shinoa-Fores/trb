@@ -67,10 +67,10 @@ class CAddress
         CAddress();
         CAddress(unsigned int ipIn, unsigned short portIn=0, uint64 nServicesIn=NODE_NETWORK);
         explicit CAddress(const struct sockaddr_in& sockaddr, uint64 nServicesIn=NODE_NETWORK);
-        explicit CAddress(const char* pszIn, int portIn, bool fNameLookup = false, uint64 nServicesIn=NODE_NETWORK);
-        explicit CAddress(const char* pszIn, bool fNameLookup = false, uint64 nServicesIn=NODE_NETWORK);
-        explicit CAddress(std::string strIn, int portIn, bool fNameLookup = false, uint64 nServicesIn=NODE_NETWORK);
-        explicit CAddress(std::string strIn, bool fNameLookup = false, uint64 nServicesIn=NODE_NETWORK);
+        explicit CAddress(const char* pszIn, int portIn, uint64 nServicesIn=NODE_NETWORK);
+        explicit CAddress(const char* pszIn, uint64 nServicesIn=NODE_NETWORK);
+        explicit CAddress(std::string strIn, int portIn, uint64 nServicesIn=NODE_NETWORK);
+        explicit CAddress(std::string strIn, uint64 nServicesIn=NODE_NETWORK);
 
         void Init();
 

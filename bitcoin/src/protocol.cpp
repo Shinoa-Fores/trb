@@ -9,8 +9,8 @@
 
 
 // Prototypes from net.h, but that header (currently) stinks, can't #include it without breaking things
-bool Lookup(const char *pszName, std::vector<CAddress>& vaddr, int nServices, int nMaxSolutions, bool fAllowLookup = false, int portDefault = 0, bool fAllowPort = false);
-bool Lookup(const char *pszName, CAddress& addr, int nServices, bool fAllowLookup = false, int portDefault = 0, bool fAllowPort = false);
+bool Lookup(const char *pszName, std::vector<CAddress>& vaddr, int nServices, int nMaxSolutions, int portDefault = 0, bool fAllowPort = false);
+bool Lookup(const char *pszName, CAddress& addr, int nServices, int portDefault = 0, bool fAllowPort = false);
 
 static const unsigned char pchIPv4[12] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff };
 static const char* ppszTypeName[] =
@@ -96,28 +96,28 @@ CAddress::CAddress(const struct sockaddr_in& sockaddr, uint64 nServicesIn)
     nServices = nServicesIn;
 }
 
-CAddress::CAddress(const char* pszIn, int portIn, bool fNameLookup, uint64 nServicesIn)
+CAddress::CAddress(const char* pszIn, int portIn, uint64 nServicesIn)
 {
     Init();
-    Lookup(pszIn, *this, nServicesIn, fNameLookup, portIn);
+    Lookup(pszIn, *this, nServicesIn, portIn);
 }
 
-CAddress::CAddress(const char* pszIn, bool fNameLookup, uint64 nServicesIn)
+CAddress::CAddress(const char* pszIn, uint64 nServicesIn)
 {
     Init();
-    Lookup(pszIn, *this, nServicesIn, fNameLookup, 0, true);
+    Lookup(pszIn, *this, nServicesIn, 0, true);
 }
 
-CAddress::CAddress(std::string strIn, int portIn, bool fNameLookup, uint64 nServicesIn)
+CAddress::CAddress(std::string strIn, int portIn, uint64 nServicesIn)
 {
     Init();
-    Lookup(strIn.c_str(), *this, nServicesIn, fNameLookup, portIn);
+    Lookup(strIn.c_str(), *this, nServicesIn, portIn);
 }
 
-CAddress::CAddress(std::string strIn, bool fNameLookup, uint64 nServicesIn)
+CAddress::CAddress(std::string strIn, uint64 nServicesIn)
 {
     Init();
-    Lookup(strIn.c_str(), *this, nServicesIn, fNameLookup, 0, true);
+    Lookup(strIn.c_str(), *this, nServicesIn, 0, true);
 }
 
 void CAddress::Init()
