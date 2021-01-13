@@ -1784,7 +1784,7 @@ Value getmemorypool(const Array& params, bool fHelp)
 
 Value dumpblock(const Array& params, bool fHelp)
 {
-    if (fHelp || params.size() < 1 || params.size() > 2)
+    if (fHelp || params.size() != 2)
         throw runtime_error(
             "dumpblock <height> <filename>\n"
             "Emit the block at <height> to <filename>.");
