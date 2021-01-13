@@ -40,9 +40,6 @@ int64 nTimeBestReceived = 0;
 
 CMedianFilter<int> cPeerBlockCounts(5, 0); // Amount of blocks that other nodes claim to have
 
-map<uint256, CBlock*> mapOrphanBlocks;
-multimap<uint256, CBlock*> mapOrphanBlocksByPrev;
-
 map<uint256, CDataStream*> mapOrphanTransactions;
 multimap<uint256, CDataStream*> mapOrphanTransactionsByPrev;
 
@@ -652,14 +649,6 @@ bool CBlock::ReadFromDisk(const CBlockIndex* pindex, bool fReadTransactions)
     if (GetHash() != pindex->GetBlockHash())
         return error("CBlock::ReadFromDisk() : GetHash() doesn't match index");
     return true;
-}
-
-uint256 static GetOrphanRoot(const CBlock* pblock)
-{
-    // Work back to the first block in the orphan chain
-    while (mapOrphanBlocks.count(pblock->hashPrevBlock))
-        pblock = mapOrphanBlocks[pblock->hashPrevBlock];
-    return pblock->GetHash();
 }
 
 int64 static GetBlockValue(int nHeight, int64 nFees)
@@ -1427,8 +1416,6 @@ bool ProcessBlock(CNode* pfrom, CBlock* pblock)
     uint256 hash = pblock->GetHash();
     if (mapBlockIndex.count(hash))
         return error("ProcessBlock() : already have block %d %s", mapBlockIndex[hash]->nHeight, hash.ToString().substr(0,20).c_str());
-    if (mapOrphanBlocks.count(hash))
-        return error("ProcessBlock() : already have block (orphan) %s", hash.ToString().substr(0,20).c_str());
 
     // Preliminary checks
     if (!pblock->CheckBlock())
@@ -1457,43 +1444,21 @@ bool ProcessBlock(CNode* pfrom, CBlock* pblock)
         }
     }
 
-
-    // If don't already have its previous block, shunt it off to holding area until we get it
+    // If don't already have its previous block, throw it out!
     if (!mapBlockIndex.count(pblock->hashPrevBlock))
     {
-        printf("ProcessBlock: ORPHAN BLOCK, prev=%s\n", pblock->hashPrevBlock.ToString().substr(0,20).c_str());
-        CBlock* pblock2 = new CBlock(*pblock);
-        mapOrphanBlocks.insert(make_pair(hash, pblock2));
-        mapOrphanBlocksByPrev.insert(make_pair(pblock2->hashPrevBlock, pblock2));
+        printf("ProcessBlock: BASTARD BLOCK, prev=%s, DISCARDED\n", pblock->hashPrevBlock.ToString().substr(0,20).c_str());
 
         // Ask this guy to fill in what we're missing
         if (pfrom)
-            pfrom->PushGetBlocks(pindexBest, GetOrphanRoot(pblock2));
-        return true;
+	    pfrom->PushGetBlocks(pindexBest, pblock->hashPrevBlock);
+
+	return true;
     }
 
     // Store to disk
     if (!pblock->AcceptBlock())
         return error("ProcessBlock() : AcceptBlock FAILED");
-
-    // Recursively process any orphan blocks that depended on this one
-    vector<uint256> vWorkQueue;
-    vWorkQueue.push_back(hash);
-    for (int i = 0; i < vWorkQueue.size(); i++)
-    {
-        uint256 hashPrev = vWorkQueue[i];
-        for (multimap<uint256, CBlock*>::iterator mi = mapOrphanBlocksByPrev.lower_bound(hashPrev);
-             mi != mapOrphanBlocksByPrev.upper_bound(hashPrev);
-             ++mi)
-        {
-            CBlock* pblockOrphan = (*mi).second;
-            if (pblockOrphan->AcceptBlock())
-                vWorkQueue.push_back(pblockOrphan->GetHash());
-            mapOrphanBlocks.erase(pblockOrphan->GetHash());
-            delete pblockOrphan;
-        }
-        mapOrphanBlocksByPrev.erase(hashPrev);
-    }
 
     printf("ProcessBlock: ACCEPTED\n");
     return true;
@@ -1767,7 +1732,7 @@ bool static AlreadyHave(CTxDB& txdb, const CInv& inv)
     switch (inv.type)
     {
     case MSG_TX:    return mapTransactions.count(inv.hash) || mapOrphanTransactions.count(inv.hash) || txdb.ContainsTx(inv.hash);
-    case MSG_BLOCK: return mapBlockIndex.count(inv.hash) || mapOrphanBlocks.count(inv.hash);
+    case MSG_BLOCK: return mapBlockIndex.count(inv.hash);
     }
     // Don't know what it is, just say we already got one
     return true;
@@ -1989,8 +1954,6 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
             if (!fAlreadyHave)
                 pfrom->AskFor(inv);
-            else if (inv.type == MSG_BLOCK && mapOrphanBlocks.count(inv.hash))
-                pfrom->PushGetBlocks(pindexBest, GetOrphanRoot(mapOrphanBlocks[inv.hash]));
 
             // Track requests for our stuff
             Inventory(inv.hash);
