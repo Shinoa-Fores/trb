@@ -85,8 +85,9 @@ CDB::CDB(const char* pszFile, const char* pszMode) : pdb(NULL)
 
             dbenv.set_lg_dir(strLogDir.c_str());
             dbenv.set_lg_max(1000000);
-            dbenv.set_lk_max_locks(40000);
-            dbenv.set_lk_max_objects(40000);
+            dbenv.set_lk_max_locks(2737000);
+            dbenv.set_lk_max_objects(1119200);
+            dbenv.set_lk_max_lockers(1119200);
             dbenv.set_errfile(fopen(strErrorFile.c_str(), "a")); /// debug
             dbenv.set_flags(DB_AUTO_COMMIT, 1);
             dbenv.set_flags(DB_TXN_WRITE_NOSYNC, 1);
