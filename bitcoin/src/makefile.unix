@@ -29,10 +29,6 @@ LIBS += \
    -l ssl \
    -l crypto
 
-ifneq (${USE_SSL}, 0)
-	DEFS += -DUSE_SSL
-endif
-
 LIBS+= \
  -Wl,-B$(LMODE2) \
    -l z \
