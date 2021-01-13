@@ -167,7 +167,6 @@ bool AppInit2(int argc, char* argv[])
             "  -connect=<ip>    \t\t  " + _("Connect only to the specified node\n") +
             "  -noirc           \t  "   + _("Don't find peers using internet relay chat\n") +
             "  -nolisten        \t  "   + _("Don't accept connections from outside\n") +
-            "  -nodnsseed       \t  "   + _("Don't bootstrap list of peers using DNS\n") +
             "  -banscore=<n>    \t  "   + _("Threshold for disconnecting misbehaving peers (default: 100)\n") +
             "  -bantime=<n>     \t  "   + _("Number of seconds to keep misbehaving peers from reconnecting (default: 86400)\n") +
             "  -maxreceivebuffer=<n>\t  " + _("Maximum per-connection receive buffer, <n>*1000 bytes (default: 10000)\n") +
@@ -415,7 +414,6 @@ bool AppInit2(int argc, char* argv[])
         // Note: the GetBoolArg() calls for all of these must happen later.
         SoftSetArg("-nolisten", true);
         SoftSetArg("-noirc", true);
-        SoftSetArg("-nodnsseed", true);
         SoftSetArg("-dns", false);
     }
 

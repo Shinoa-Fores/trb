@@ -19,7 +19,6 @@ static const int MAX_OUTBOUND_CONNECTIONS = 8;
 void ThreadMessageHandler2(void* parg);
 void ThreadSocketHandler2(void* parg);
 void ThreadOpenConnections2(void* parg);
-void ThreadDNSAddressSeed2(void* parg);
 bool OpenNetworkConnection(const CAddress& addrConnect);
 
 
@@ -1067,92 +1066,6 @@ void ThreadSocketHandler2(void* parg)
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-static const char *strDNSSeed[] = {
-    "bitseed.xf2.org",
-    "dnsseed.bluematt.me",
-    "seed.bitcoin.sipa.be",
-    "dnsseed.bitcoin.dashjr.org",
-};
-
-void ThreadDNSAddressSeed(void* parg)
-{
-    IMPLEMENT_RANDOMIZE_STACK(ThreadDNSAddressSeed(parg));
-    try
-    {
-        vnThreadsRunning[6]++;
-        ThreadDNSAddressSeed2(parg);
-        vnThreadsRunning[6]--;
-    }
-    catch (std::exception& e) {
-        vnThreadsRunning[6]--;
-        PrintException(&e, "ThreadDNSAddressSeed()");
-    } catch (...) {
-        vnThreadsRunning[6]--;
-        throw; // support pthread_cancel()
-    }
-    printf("ThreadDNSAddressSeed exiting\n");
-}
-
-void ThreadDNSAddressSeed2(void* parg)
-{
-    printf("ThreadDNSAddressSeed started\n");
-    int found = 0;
-
-    if (!fTestNet)
-    {
-        printf("Loading addresses from DNS seeds (could take a while)\n");
-
-        for (int seed_idx = 0; seed_idx < ARRAYLEN(strDNSSeed); seed_idx++) {
-            vector<CAddress> vaddr;
-            if (Lookup(strDNSSeed[seed_idx], vaddr, NODE_NETWORK, -1, true))
-            {
-                CAddrDB addrDB;
-                addrDB.TxnBegin();
-                BOOST_FOREACH (CAddress& addr, vaddr)
-                {
-                    if (addr.GetByte(3) != 127)
-                    {
-                        addr.nTime = 0;
-                        AddAddress(addr, 0, &addrDB);
-                        found++;
-                    }
-                }
-                addrDB.TxnCommit();  // Save addresses (it's ok if this fails)
-            }
-        }
-    }
-
-    printf("%d addresses found from DNS seeds\n", found);
-}
-
-
-
-
-
-
-
-
-
-
-
-
 unsigned int pnSeed[] =
 {
     0x959bd347, 0xf8de42b2, 0x73bc0518, 0xea6edc50, 0x21b00a4d, 0xc725b43d, 0xd665464d, 0x1a2a770e,
@@ -1649,12 +1562,6 @@ void StartNode(void* parg)
     // Start threads
     //
 
-    if (GetBoolArg("-nodnsseed"))
-        printf("DNS seeding disabled\n");
-    else
-        if (!CreateThread(ThreadDNSAddressSeed, NULL))
-            printf("Error: CreateThread(ThreadDNSAddressSeed) failed\n");
-
     // Get addresses from IRC and advertise ours
     if (!CreateThread(ThreadIRCSeed, NULL))
         printf("Error: CreateThread(ThreadIRCSeed) failed\n");
@@ -1693,7 +1600,6 @@ bool StopNode()
     if (vnThreadsRunning[2] > 0) printf("ThreadMessageHandler still running\n");
     if (vnThreadsRunning[3] > 0) printf("ThreadBitcoinMiner still running\n");
     if (vnThreadsRunning[4] > 0) printf("ThreadRPCServer still running\n");
-    if (vnThreadsRunning[6] > 0) printf("ThreadDNSAddressSeed still running\n");
     while (vnThreadsRunning[2] > 0 || vnThreadsRunning[4] > 0)
         Sleep(20);
     Sleep(50);
