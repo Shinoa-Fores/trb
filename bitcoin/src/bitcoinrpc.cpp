@@ -1817,6 +1817,28 @@ Value dumpblock(const Array& params, bool fHelp)
 }
 
 
+Value eatblock(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() < 1 || params.size() > 1)
+        throw runtime_error(
+            "eatblock <filename>\n"
+            "Load a candidate for the next block directly from <filename>.");
+
+    if (!fCanEat)
+        throw runtime_error(
+            "'eatblock' is only permitted if bitcoind was started with -caneat flag!");
+
+    // path to load block from
+    string filename = params[0].get_str();
+    
+    printf("Attempting to create block #%d from file %s\n", nBestHeight + 1, filename.c_str());
+    CAutoFile filein = fopen(filename.c_str(), "rb");
+    CBlock block;
+    filein >> block;
+    return ProcessBlock(NULL, &block); // note that 'true' even if it was rejected (bastard, etc)
+} // ... but will return 'false' if we already have the block.
+
+
 
 //
 // Call Table
@@ -1865,6 +1887,7 @@ pair<string, rpcfn_type> pCallTable[] =
     make_pair("getmemorypool",          &getmemorypool),
     make_pair("listsinceblock",        &listsinceblock),
     make_pair("dumpblock",              &dumpblock),
+    make_pair("eatblock",               &eatblock),
 };
 map<string, rpcfn_type> mapCallTable(pCallTable, pCallTable + sizeof(pCallTable)/sizeof(pCallTable[0]));
 

@@ -174,6 +174,7 @@ bool AppInit2(int argc, char* argv[])
             "  -daemon          \t\t  " + _("Run in the background as a daemon and accept commands\n") +
             "  -testnet         \t\t  " + _("Use the test network\n") +
             "  -debug           \t\t  " + _("Output extra debugging information\n") +
+	    "  -caneat          \t\t  " + _("Permit the use of 'eatblock'\n") +
             "  -logtimestamps   \t  "   + _("Prepend debug output with timestamp\n") +
             "  -printtoconsole  \t  "   + _("Send trace/debug info to console instead of debug.log file\n") +
             "  -rpcuser=<user>  \t  "   + _("Username for JSON-RPC connections\n") +
@@ -196,6 +197,7 @@ bool AppInit2(int argc, char* argv[])
     fTestNet = GetBoolArg("-testnet");
     fDebug = GetBoolArg("-debug");
     fDaemon = GetBoolArg("-daemon");
+    fCanEat = GetBoolArg("-caneat");
 
     if (fDaemon)
         fServer = true;

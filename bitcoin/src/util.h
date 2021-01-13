@@ -110,6 +110,7 @@ extern std::map<std::string, std::vector<std::string> > mapMultiArgs;
 extern bool fDebug;
 extern bool fPrintToConsole;
 extern bool fPrintToDebugger;
+extern bool fCanEat;
 extern char pszSetDataDir[MAX_PATH];
 extern bool fRequestShutdown;
 extern bool fShutdown;
