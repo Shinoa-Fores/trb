@@ -22,6 +22,8 @@
 // a certain size around 145MB.  If we need access to json_spirit outside this
 // file, we could use the compiled json_spirit option.
 
+// v0.5.4 RELEASE (keccak)
+
 using namespace std;
 using namespace boost;
 using namespace boost::asio;

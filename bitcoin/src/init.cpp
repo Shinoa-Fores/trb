@@ -12,7 +12,7 @@
 #include <boost/filesystem/fstream.hpp>
 #include <boost/interprocess/sync/file_lock.hpp>
 
-// v0.5.4 RELEASE
+// v0.5.4 RELEASE (keccak)
 
 using namespace std;
 using namespace boost;
