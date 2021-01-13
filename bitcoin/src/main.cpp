@@ -1877,6 +1877,9 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
             return error("message getdata size() = %d", vInv.size());
         }
 
+        // Counter of bytes sent in response to this 'getdata' command
+        unsigned int sentBytes = 0;
+
         BOOST_FOREACH(const CInv& inv, vInv)
         {
             if (fShutdown)
@@ -1891,6 +1894,17 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
                 {
                     CBlock block;
                     block.ReadFromDisk((*mi).second);
+
+                    // Add block's size to sentBytes, and determine if reached limit
+                    sentBytes += block.GetSerializeSize(SER_NETWORK);
+                    if (sentBytes >= SendBufferSize())
+                    {
+                      printf("getdata (block) may not transmit %u bytes\n", sentBytes);
+                      pfrom->Misbehaving(20);
+                      break;
+                    }
+
+                    // Limit not reached, so permitted to send block
                     pfrom->PushMessage("block", block);
 
                     // Trigger them to send a getblocks request for the next batch of inventory
