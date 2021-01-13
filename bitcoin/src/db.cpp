@@ -768,11 +768,9 @@ int CWalletDB::LoadWallet(CWallet* pwallet)
     bool fIsEncrypted = false;
 
     // Modify defaults
-#ifndef WIN32
     // Tray icon sometimes disappears on 9.10 karmic koala 64-bit, leaving no way to access the program
     fMinimizeToTray = false;
     fMinimizeOnClose = false;
-#endif
 
     //// todo: shouldn't we catch exceptions and try to recover and continue?
     CRITICAL_BLOCK(pwallet->cs_wallet)

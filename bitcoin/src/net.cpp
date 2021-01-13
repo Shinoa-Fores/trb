@@ -10,10 +10,6 @@
 #include "init.h"
 #include "strlcpy.h"
 
-#ifdef WIN32
-#include <string.h>
-#endif
-
 
 using namespace std;
 using namespace boost;
@@ -94,13 +90,9 @@ bool ConnectSocket(const CAddress& addrConnect, SOCKET& hSocketRet, int nTimeout
     bool fProxy = (fUseProxy && addrConnect.IsRoutable());
     struct sockaddr_in sockaddr = (fProxy ? addrProxy.GetSockAddr() : addrConnect.GetSockAddr());
 
-#ifdef WIN32
-    u_long fNonblock = 1;
-    if (ioctlsocket(hSocket, FIONBIO, &fNonblock) == SOCKET_ERROR)
-#else
     int fFlags = fcntl(hSocket, F_GETFL, 0);
     if (fcntl(hSocket, F_SETFL, fFlags | O_NONBLOCK) == -1)
-#endif
+
     {
         closesocket(hSocket);
         return false;
@@ -133,11 +125,7 @@ bool ConnectSocket(const CAddress& addrConnect, SOCKET& hSocketRet, int nTimeout
                 return false;
             }
             socklen_t nRetSize = sizeof(nRet);
-#ifdef WIN32
-            if (getsockopt(hSocket, SOL_SOCKET, SO_ERROR, (char*)(&nRet), &nRetSize) == SOCKET_ERROR)
-#else
             if (getsockopt(hSocket, SOL_SOCKET, SO_ERROR, &nRet, &nRetSize) == SOCKET_ERROR)
-#endif
             {
                 printf("getsockopt() for connection failed: %i\n",WSAGetLastError());
                 closesocket(hSocket);
@@ -150,11 +138,7 @@ bool ConnectSocket(const CAddress& addrConnect, SOCKET& hSocketRet, int nTimeout
                 return false;
             }
         }
-#ifdef WIN32
-        else if (WSAGetLastError() != WSAEISCONN)
-#else
         else
-#endif
         {
             printf("connect() failed: %i\n",WSAGetLastError());
             closesocket(hSocket);
@@ -167,13 +151,8 @@ bool ConnectSocket(const CAddress& addrConnect, SOCKET& hSocketRet, int nTimeout
     CNode::ConnectNode immediately turns the socket back to non-blocking
     but we'll turn it back to blocking just in case
     */
-#ifdef WIN32
-    fNonblock = 0;
-    if (ioctlsocket(hSocket, FIONBIO, &fNonblock) == SOCKET_ERROR)
-#else
     fFlags = fcntl(hSocket, F_GETFL, 0);
     if (fcntl(hSocket, F_SETFL, fFlags & !O_NONBLOCK) == SOCKET_ERROR)
-#endif
     {
         closesocket(hSocket);
         return false;
@@ -670,14 +649,8 @@ CNode* ConnectNode(CAddress addrConnect, int64 nTimeout)
         printf("connected %s\n", addrConnect.ToString().c_str());
 
         // Set to nonblocking
-#ifdef WIN32
-        u_long nOne = 1;
-        if (ioctlsocket(hSocket, FIONBIO, &nOne) == SOCKET_ERROR)
-            printf("ConnectSocket() : ioctlsocket nonblocking setting failed, error %d\n", WSAGetLastError());
-#else
         if (fcntl(hSocket, F_SETFL, O_NONBLOCK) == SOCKET_ERROR)
             printf("ConnectSocket() : fcntl nonblocking setting failed, error %d\n", errno);
-#endif
 
         // Add node
         CNode* pnode = new CNode(hSocket, addrConnect, false);
@@ -1564,18 +1537,6 @@ bool BindListenPort(string& strError)
     int nOne = 1;
     addrLocalHost.port = htons(GetListenPort());
 
-#ifdef WIN32
-    // Initialize Windows Sockets
-    WSADATA wsadata;
-    int ret = WSAStartup(MAKEWORD(2,2), &wsadata);
-    if (ret != NO_ERROR)
-    {
-        strError = strprintf("Error: TCP/IP socket library failed to start (WSAStartup returned error %d)", ret);
-        printf("%s\n", strError.c_str());
-        return false;
-    }
-#endif
-
     // Create socket for listening for incoming connections
     hListenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (hListenSocket == INVALID_SOCKET)
@@ -1590,18 +1551,11 @@ bool BindListenPort(string& strError)
     setsockopt(hListenSocket, SOL_SOCKET, SO_NOSIGPIPE, (void*)&nOne, sizeof(int));
 #endif
 
-#ifndef WIN32
     // Allow binding if the port is still in TIME_WAIT state after
     // the program was closed and restarted.  Not an issue on windows.
     setsockopt(hListenSocket, SOL_SOCKET, SO_REUSEADDR, (void*)&nOne, sizeof(int));
-#endif
 
-#ifdef WIN32
-    // Set to nonblocking, incoming connections will also inherit this
-    if (ioctlsocket(hListenSocket, FIONBIO, (u_long*)&nOne) == SOCKET_ERROR)
-#else
     if (fcntl(hListenSocket, F_SETFL, O_NONBLOCK) == SOCKET_ERROR)
-#endif
     {
         strError = strprintf("Error: Couldn't set properties on socket for incoming connections (error %d)", WSAGetLastError());
         printf("%s\n", strError.c_str());
@@ -1643,21 +1597,6 @@ void StartNode(void* parg)
     if (pnodeLocalHost == NULL)
         pnodeLocalHost = new CNode(INVALID_SOCKET, CAddress("127.0.0.1", 0, false, nLocalServices));
 
-#ifdef WIN32
-    // Get local host ip
-    char pszHostName[1000] = "";
-    if (gethostname(pszHostName, sizeof(pszHostName)) != SOCKET_ERROR)
-    {
-        vector<CAddress> vaddr;
-        if (Lookup(pszHostName, vaddr, nLocalServices, -1, true))
-            BOOST_FOREACH (const CAddress &addr, vaddr)
-                if (addr.GetByte(3) != 127)
-                {
-                    addrLocalHost = addr;
-                    break;
-                }
-    }
-#else
     // Get local host ip
     struct ifaddrs* myaddrs;
     if (getifaddrs(&myaddrs) == 0)
@@ -1692,7 +1631,7 @@ void StartNode(void* parg)
         }
         freeifaddrs(myaddrs);
     }
-#endif
+
     printf("addrLocalHost = %s\n", addrLocalHost.ToString().c_str());
 
     if (fUseProxy || mapArgs.count("-connect") || fNoListen)
@@ -1778,10 +1717,6 @@ public:
             if (closesocket(hListenSocket) == SOCKET_ERROR)
                 printf("closesocket(hListenSocket) failed with error %d\n", WSAGetLastError());
 
-#ifdef WIN32
-        // Shutdown Windows Sockets
-        WSACleanup();
-#endif
     }
 }
 instance_of_cnetcleanup;

@@ -25,10 +25,6 @@ CWallet* pwalletMain;
 
 void ExitTimeout(void* parg)
 {
-#ifdef WIN32
-    Sleep(5000);
-    ExitProcess(0);
-#endif
 }
 
 void Shutdown(void* parg)
@@ -113,19 +109,8 @@ bool AppInit(int argc, char* argv[])
 
 bool AppInit2(int argc, char* argv[])
 {
-#ifdef _MSC_VER
-    // Turn off microsoft heap dump noise
-    _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_FILE);
-    _CrtSetReportFile(_CRT_WARN, CreateFileA("NUL", GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0));
-#endif
-#if _MSC_VER >= 1400
-    // Disable confusing "helpful" text message on abort, ctrl-c
-    _set_abort_behavior(0, _WRITE_ABORT_MSG | _CALL_REPORTFAULT);
-#endif
-#ifndef WIN32
     umask(077);
-#endif
-#ifndef WIN32
+
     // Clean shutdown on SIGTERM
     struct sigaction sa;
     sa.sa_handler = HandleSIGTERM;
@@ -134,7 +119,6 @@ bool AppInit2(int argc, char* argv[])
     sigaction(SIGTERM, &sa, NULL);
     sigaction(SIGINT, &sa, NULL);
     sigaction(SIGHUP, &sa, NULL);
-#endif
 
     //
     // Parameters
@@ -189,16 +173,11 @@ bool AppInit2(int argc, char* argv[])
             "  -maxreceivebuffer=<n>\t  " + _("Maximum per-connection receive buffer, <n>*1000 bytes (default: 10000)\n") +
             "  -maxsendbuffer=<n>\t  "   + _("Maximum per-connection send buffer, <n>*1000 bytes (default: 10000)\n") +
             "  -paytxfee=<amt>  \t  "   + _("Fee per kB to add to transactions you send\n") +
-#if !defined(WIN32)
             "  -daemon          \t\t  " + _("Run in the background as a daemon and accept commands\n") +
-#endif
             "  -testnet         \t\t  " + _("Use the test network\n") +
             "  -debug           \t\t  " + _("Output extra debugging information\n") +
             "  -logtimestamps   \t  "   + _("Prepend debug output with timestamp\n") +
             "  -printtoconsole  \t  "   + _("Send trace/debug info to console instead of debug.log file\n") +
-#ifdef WIN32
-            "  -printtodebugger \t  "   + _("Send trace/debug info to debugger\n") +
-#endif
             "  -rpcuser=<user>  \t  "   + _("Username for JSON-RPC connections\n") +
             "  -rpcpassword=<pw>\t  "   + _("Password for JSON-RPC connections\n") +
             "  -rpcport=<port>  \t\t  " + _("Listen for JSON-RPC connections on <port> (default: 8332)\n") +
@@ -218,12 +197,7 @@ bool AppInit2(int argc, char* argv[])
 
     fTestNet = GetBoolArg("-testnet");
     fDebug = GetBoolArg("-debug");
-
-#if !defined(WIN32)
     fDaemon = GetBoolArg("-daemon");
-#else
-    fDaemon = false;
-#endif
 
     if (fDaemon)
         fServer = true;
@@ -246,7 +220,6 @@ bool AppInit2(int argc, char* argv[])
         exit(ret);
     }
 
-#if !defined(WIN32)
     if (fDaemon)
     {
         // Daemonize
@@ -266,7 +239,6 @@ bool AppInit2(int argc, char* argv[])
         if (sid < 0)
             fprintf(stderr, "Error: setsid() returned %d errno %d\n", sid, errno);
     }
-#endif
 
     if (!fDebug && !pszSetDataDir[0])
         ShrinkDebugFile();

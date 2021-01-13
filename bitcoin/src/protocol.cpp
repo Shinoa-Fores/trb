@@ -5,10 +5,8 @@
 
 #include "protocol.h"
 #include "util.h"
+#include <arpa/inet.h>
 
-#ifndef WIN32
-# include <arpa/inet.h>
-#endif
 
 // Prototypes from net.h, but that header (currently) stinks, can't #include it without breaking things
 bool Lookup(const char *pszName, std::vector<CAddress>& vaddr, int nServices, int nMaxSolutions, bool fAllowLookup = false, int portDefault = 0, bool fAllowPort = false);
@@ -165,11 +163,7 @@ std::vector<unsigned char> CAddress::GetKey() const
     ss.reserve(18);
     ss << FLATDATA(pchReserved) << ip << port;
 
-    #if defined(_MSC_VER) && _MSC_VER < 1300
-    return std::vector<unsigned char>((unsigned char*)&ss.begin()[0], (unsigned char*)&ss.end()[0]);
-    #else
     return std::vector<unsigned char>(ss.begin(), ss.end());
-    #endif
 }
 
 struct sockaddr_in CAddress::GetSockAddr() const

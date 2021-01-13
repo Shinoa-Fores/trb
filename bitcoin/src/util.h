@@ -7,11 +7,10 @@
 
 #include "uint256.h"
 
-#ifndef WIN32
+
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/resource.h>
-#endif
 #include <map>
 #include <vector>
 #include <string>
@@ -25,19 +24,10 @@
 #include <openssl/ripemd.h>
 
 
-#if defined(_MSC_VER) || defined(__BORLANDC__)
-typedef __int64  int64;
-typedef unsigned __int64  uint64;
-#else
 typedef long long  int64;
 typedef unsigned long long  uint64;
-#endif
-#if defined(_MSC_VER) && _MSC_VER < 1300
-#define for  if (false) ; else for
-#endif
-#ifndef _MSC_VER
+
 #define __forceinline  inline
-#endif
 
 #define loop                for (;;)
 #define BEGIN(a)            ((char*)&(a))
@@ -53,15 +43,9 @@ typedef unsigned long long  uint64;
 #define snprintf my_snprintf
 
 #ifndef PRI64d
-#if defined(_MSC_VER) || defined(__BORLANDC__) || defined(__MSVCRT__)
-#define PRI64d  "I64d"
-#define PRI64u  "I64u"
-#define PRI64x  "I64x"
-#else
 #define PRI64d  "lld"
 #define PRI64u  "llu"
 #define PRI64x  "llx"
-#endif
 #endif
 
 // This is needed because the foreach macro can't get over the comma in pair<t1, t2>
@@ -81,21 +65,6 @@ T* alignup(T* p)
     return u.ptr;
 }
 
-#ifdef WIN32
-#define MSG_NOSIGNAL        0
-#define MSG_DONTWAIT        0
-#ifndef UINT64_MAX
-#define UINT64_MAX          _UI64_MAX
-#define INT64_MAX           _I64_MAX
-#define INT64_MIN           _I64_MIN
-#endif
-#ifndef S_IRUSR
-#define S_IRUSR             0400
-#define S_IWUSR             0200
-#endif
-#define unlink              _unlink
-typedef int socklen_t;
-#else
 #define WSAGetLastError()   errno
 #define WSAEINVAL           EINVAL
 #define WSAEALREADY         EALREADY
@@ -119,17 +88,13 @@ inline void Sleep(int64 n)
       So we clamp our sleeps here to 10 years and hope that boost is fixed by 2028.*/
     boost::thread::sleep(boost::get_system_time() + boost::posix_time::milliseconds(n>315576000000LL?315576000000LL:n));
 }
-#endif
+
 
 inline int myclosesocket(SOCKET& hSocket)
 {
     if (hSocket == INVALID_SOCKET)
         return WSAENOTSOCK;
-#ifdef WIN32
-    int ret = closesocket(hSocket);
-#else
     int ret = close(hSocket);
-#endif
     hSocket = INVALID_SOCKET;
     return ret;
 }
@@ -138,14 +103,6 @@ inline const char* _(const char* psz)
 {
     return psz;
 }
-
-
-
-
-
-
-
-
 
 
 extern std::map<std::string, std::string> mapArgs;
@@ -193,9 +150,6 @@ std::string GetConfigFile();
 std::string GetPidFile();
 void CreatePidFile(std::string pidFile, pid_t pid);
 void ReadConfigFile(std::map<std::string, std::string>& mapSettingsRet, std::map<std::string, std::vector<std::string> >& mapMultiSettingsRet);
-#ifdef WIN32
-std::string MyGetSpecialFolderPath(int nFolder, bool fCreate);
-#endif
 std::string GetDefaultDataDir();
 std::string GetDataDir();
 void ShrinkDebugFile();
@@ -323,20 +277,12 @@ inline std::string itostr(int n)
 
 inline int64 atoi64(const char* psz)
 {
-#ifdef _MSC_VER
-    return _atoi64(psz);
-#else
     return strtoll(psz, NULL, 10);
-#endif
 }
 
 inline int64 atoi64(const std::string& str)
 {
-#ifdef _MSC_VER
-    return _atoi64(str.c_str());
-#else
     return strtoll(str.c_str(), NULL, 10);
-#endif
 }
 
 inline int atoi(const std::string& str)
@@ -411,13 +357,9 @@ inline void PrintHex(const std::vector<unsigned char>& vch, const char* pszForma
 inline int64 GetPerformanceCounter()
 {
     int64 nCounter = 0;
-#ifdef WIN32
-    QueryPerformanceCounter((LARGE_INTEGER*)&nCounter);
-#else
     timeval t;
     gettimeofday(&t, NULL);
     nCounter = t.tv_sec * 1000000 + t.tv_usec;
-#endif
     return nCounter;
 }
 
@@ -445,11 +387,7 @@ void skipspaces(T& it)
 
 inline bool IsSwitchChar(char c)
 {
-#ifdef WIN32
-    return c == '-' || c == '/';
-#else
     return c == '-';
-#endif
 }
 
 inline std::string GetArg(const std::string& strArg, const std::string& strDefault)
@@ -505,11 +443,6 @@ bool SoftSetArg(const std::string& strArg, bool fValue);
 
 inline void heapchk()
 {
-#ifdef WIN32
-    /// for debugging
-    //if (_heapchk() != _HEAPOK)
-    //    DebugBreak();
-#endif
 }
 
 // Randomize the stack to help protect against buffer overrun exploits
@@ -664,38 +597,6 @@ public:
 
 // Note: It turns out we might have been able to use boost::thread
 // by using TerminateThread(boost::thread.native_handle(), 0);
-#ifdef WIN32
-typedef HANDLE pthread_t;
-
-inline pthread_t CreateThread(void(*pfn)(void*), void* parg, bool fWantHandle=false)
-{
-    DWORD nUnused = 0;
-    HANDLE hthread =
-        CreateThread(
-            NULL,                        // default security
-            0,                           // inherit stack size from parent
-            (LPTHREAD_START_ROUTINE)pfn, // function pointer
-            parg,                        // argument
-            0,                           // creation option, start immediately
-            &nUnused);                   // thread identifier
-    if (hthread == NULL)
-    {
-        printf("Error: CreateThread() returned %d\n", GetLastError());
-        return (pthread_t)0;
-    }
-    if (!fWantHandle)
-    {
-        CloseHandle(hthread);
-        return (pthread_t)-1;
-    }
-    return hthread;
-}
-
-inline void SetThreadPriority(int nPriority)
-{
-    SetThreadPriority(GetCurrentThread(), nPriority);
-}
-#else
 inline pthread_t CreateThread(void(*pfn)(void*), void* parg, bool fWantHandle=false)
 {
     pthread_t hthread = 0;
@@ -738,29 +639,11 @@ inline void ExitThread(size_t nExitCode)
 {
     pthread_exit((void*)nExitCode);
 }
-#endif
-
-
 
 
 
 inline bool AffinityBugWorkaround(void(*pfn)(void*))
 {
-#ifdef WIN32
-    // Sometimes after a few hours affinity gets stuck on one processor
-    DWORD_PTR dwProcessAffinityMask = -1;
-    DWORD_PTR dwSystemAffinityMask = -1;
-    GetProcessAffinityMask(GetCurrentProcess(), &dwProcessAffinityMask, &dwSystemAffinityMask);
-    DWORD dwPrev1 = SetThreadAffinityMask(GetCurrentThread(), dwProcessAffinityMask);
-    DWORD dwPrev2 = SetThreadAffinityMask(GetCurrentThread(), dwProcessAffinityMask);
-    if (dwPrev2 != dwProcessAffinityMask)
-    {
-        printf("AffinityBugWorkaround() : SetThreadAffinityMask=%d, ProcessAffinityMask=%d, restarting thread\n", dwPrev2, dwProcessAffinityMask);
-        if (!CreateThread(pfn, NULL))
-            printf("Error: CreateThread() failed\n");
-        return true;
-    }
-#endif
     return false;
 }
 

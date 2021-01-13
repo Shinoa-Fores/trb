@@ -10,10 +10,6 @@
 #include <boost/foreach.hpp>
 #include <openssl/rand.h>
 
-#ifndef WIN32
-#include <arpa/inet.h>
-#endif
-
 #include "protocol.h"
 
 class CAddrDB;

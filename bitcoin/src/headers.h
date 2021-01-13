@@ -3,22 +3,6 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file license.txt or http://www.opensource.org/licenses/mit-license.php.
 
-#ifdef _MSC_VER
-#pragma warning(disable:4786)
-#pragma warning(disable:4804)
-#pragma warning(disable:4805)
-#pragma warning(disable:4717)
-#endif
-#ifdef _WIN32_WINNT
-#undef _WIN32_WINNT
-#endif
-#define _WIN32_WINNT 0x0500
-#ifdef _WIN32_IE
-#undef _WIN32_IE
-#endif
-#define _WIN32_IE 0x0400
-#define WIN32_LEAN_AND_MEAN 1
-
 // Include boost/foreach here as it defines __STDC_LIMIT_MACROS on some systems.
 #include <boost/foreach.hpp>
 #ifndef __STDC_LIMIT_MACROS
@@ -55,16 +39,6 @@
 #include <deque>
 #include <map>
 
-#ifdef WIN32
-#include <windows.h>
-#include <winsock2.h>
-#include <mswsock.h>
-#include <shlobj.h>
-#include <shlwapi.h>
-#include <io.h>
-#include <process.h>
-#include <malloc.h>
-#else
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/socket.h>
@@ -77,7 +51,7 @@
 #include <ifaddrs.h>
 #include <fcntl.h>
 #include <signal.h>
-#endif
+
 #ifdef BSD
 #include <netinet/in.h>
 #endif
