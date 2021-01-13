@@ -84,11 +84,13 @@ CDB::CDB(const char* pszFile, const char* pszMode) : pdb(NULL)
             printf("dbenv.open strLogDir=%s strErrorFile=%s\n", strLogDir.c_str(), strErrorFile.c_str());
 
             dbenv.set_lg_dir(strLogDir.c_str());
-            dbenv.set_lg_max(10000000);
-            dbenv.set_lk_max_locks(10000);
-            dbenv.set_lk_max_objects(10000);
+            dbenv.set_lg_max(1000000);
+            dbenv.set_lk_max_locks(40000);
+            dbenv.set_lk_max_objects(40000);
             dbenv.set_errfile(fopen(strErrorFile.c_str(), "a")); /// debug
             dbenv.set_flags(DB_AUTO_COMMIT, 1);
+            dbenv.set_flags(DB_TXN_WRITE_NOSYNC, 1);
+            dbenv.log_set_config(DB_LOG_AUTO_REMOVE, 1);
             ret = dbenv.open(strDataDir.c_str(),
                              DB_CREATE     |
                              DB_INIT_LOCK  |
