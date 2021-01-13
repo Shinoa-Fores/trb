@@ -4,7 +4,6 @@
 // file license.txt or http://www.opensource.org/licenses/mit-license.php.
 
 #include "headers.h"
-#include "irc.h"
 #include "db.h"
 #include "net.h"
 #include "init.h"
@@ -241,24 +240,6 @@ bool Lookup(const char *pszName, CAddress& addr, int nServices, int portDefault,
     if (fRet)
         addr = vaddr[0];
     return fRet;
-}
-
-
-void ThreadGetMyExternalIP(void* parg)
-{
-    // Wait for IRC to get it first
-    if (!GetBoolArg("-noirc"))
-    {
-        for (int i = 0; i < 2 * 60; i++)
-        {
-            Sleep(1000);
-            if (fGotExternalIP || fShutdown)
-                return;
-        }
-    }
-
-    // Fallback in case IRC fails to get it
-    // ... nope.
 }
 
 
@@ -1169,11 +1150,6 @@ void ThreadOpenConnections2(void* parg)
                 if (nSinceLastTry < nDelay)
                     continue;
 
-                // If we have IRC, we'll be notified when they first come online,
-                // and again every 24 hours by the refresh broadcast.
-                if (nGotIRCAddresses > 0 && vNodes.size() >= 2 && nSinceLastSeen > 24 * 60 * 60)
-                    continue;
-
                 // Only try the old stuff if we don't have enough connections
                 if (vNodes.size() >= 8 && nSinceLastSeen > 24 * 60 * 60)
                     continue;
@@ -1407,20 +1383,21 @@ void StartNode(void* parg)
     {
         // Proxies can't take incoming connections
         addrLocalHost.ip = CAddress("0.0.0.0").ip;
-        printf("addrLocalHost = %s\n", addrLocalHost.ToString().c_str());
     }
     else
     {
-        CreateThread(ThreadGetMyExternalIP, NULL);
+        addrLocalHost.ip = CAddress(mapArgs["-myip"]).ip;
+        if (!addrLocalHost.IsValid())
+	  throw runtime_error(strprintf(_("You must set myip=<ipaddress> on the command line or in the configuration file:\n%s\n"
+					  "If the file does not exist, create it with owner-readable-only file permissions."),
+					GetConfigFile().c_str()));
     }
+
+    printf("addrLocalHost = %s\n", addrLocalHost.ToString().c_str());
 
     //
     // Start threads
     //
-
-    // Get addresses from IRC and advertise ours
-    if (!CreateThread(ThreadIRCSeed, NULL))
-        printf("Error: CreateThread(ThreadIRCSeed) failed\n");
 
     // Send and receive from sockets, accept connections
     if (!CreateThread(ThreadSocketHandler, NULL))

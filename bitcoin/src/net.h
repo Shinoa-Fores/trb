@@ -28,7 +28,6 @@ static const unsigned int PUBLISH_HOPS = 5;
 bool ConnectSocket(const CAddress& addrConnect, SOCKET& hSocketRet, int nTimeout=nConnectTimeout);
 bool Lookup(const char *pszName, std::vector<CAddress>& vaddr, int nServices, int nMaxSolutions, int portDefault = 0, bool fAllowPort = false);
 bool Lookup(const char *pszName, CAddress& addr, int nServices, int portDefault = 0, bool fAllowPort = false);
-bool GetMyExternalIP(unsigned int& ipRet);
 bool AddAddress(CAddress addr, int64 nTimePenalty=0, CAddrDB *pAddrDB=NULL);
 void AddressCurrentlyConnected(const CAddress& addr);
 CNode* FindNode(unsigned int ip);

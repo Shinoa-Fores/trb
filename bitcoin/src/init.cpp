@@ -162,9 +162,9 @@ bool AppInit2(int argc, char* argv[])
             "  -proxy=<ip:port> \t  "   + _("Connect through socks4 proxy\n") +
             "  -port=<port>     \t\t  " + _("Listen for connections on <port> (default: 8333 or testnet: 18333)\n") +
             "  -maxconnections=<n>\t  " + _("Maintain at most <n> connections to peers (default: 125)\n") +
+            "  -myip=<ip>       \t  "   + _("Set this node's external IP address.\n") +
             "  -addnode=<ip>    \t  "   + _("Add a node to connect to\n") +
             "  -connect=<ip>    \t\t  " + _("Connect only to the specified node\n") +
-            "  -noirc           \t  "   + _("Don't find peers using internet relay chat\n") +
             "  -nolisten        \t  "   + _("Don't accept connections from outside\n") +
             "  -banscore=<n>    \t  "   + _("Threshold for disconnecting misbehaving peers (default: 100)\n") +
             "  -bantime=<n>     \t  "   + _("Number of seconds to keep misbehaving peers from reconnecting (default: 86400)\n") +
@@ -412,7 +412,6 @@ bool AppInit2(int argc, char* argv[])
         // Use SoftSetArg here so user can override any of these if they wish.
         // Note: the GetBoolArg() calls for all of these must happen later.
         SoftSetArg("-nolisten", true);
-        SoftSetArg("-noirc", true);
     }
 
     fNoListen = GetBoolArg("-nolisten");
