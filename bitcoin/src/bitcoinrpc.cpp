@@ -1758,8 +1758,8 @@ Value getmemorypool(const Array& params, bool fHelp)
         result.push_back(Pair("version", pblock->nVersion));
         result.push_back(Pair("previousblockhash", pblock->hashPrevBlock.GetHex()));
         result.push_back(Pair("transactions", transactions));
-        result.push_back(Pair("coinbasevalue", (int64_t)pblock->vtx[0].vout[0].nValue));
-        result.push_back(Pair("time", (int64_t)pblock->nTime));
+        result.push_back(Pair("coinbasevalue", (boost::int64_t)pblock->vtx[0].vout[0].nValue));
+        result.push_back(Pair("time", (boost::int64_t)pblock->nTime));
 
         union {
             int32_t nBits;
