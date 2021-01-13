@@ -1,0 +1,56 @@
+######################################
+#Turds!
+OPENSSL=openssl-1.0.1g
+BDB=db-4.8.30
+BOOST=boost_1_52_0
+######################################
+
+export DIST=$(shell readlink -f ../deps)
+export OURLIBS=$(shell readlink -f ./ourlibs)
+export CC=$(shell readlink -f toolchain/usr/bin/x86_64-therealbitcoin-linux-musl-gcc)
+export CXX=$(shell readlink -f toolchain/usr/bin/x86_64-therealbitcoin-linux-musl-g++)
+export LD=$(shell readlink -f toolchain/usr/bin/x86_64-therealbitcoin-linux-musl-ld)
+export CFLAGS=-I$(shell readlink -f toolchain/usr/include)
+export LDFLAGS=-L$(shell readlink -f toolchain/usr/lib)
+export PATH := $(PATH):$(shell readlink -f toolchain/usr/bin)
+export BOOST_INCLUDE_PATH=$(OURLIBS)/include
+export BDB_INCLUDE_PATH=$(OURLIBS)/include
+export OPENSSL_INCLUDE_PATH=$(OURLIBS)/include
+export BOOST_LIB_PATH=$(OURLIBS)/lib
+export BDB_LIB_PATH=$(OURLIBS)/lib
+export OPENSSL_LIB_PATH=$(OURLIBS)/lib
+
+
+all: $(BOOST) $(BDB) $(OPENSSL) bitcoind
+
+clean:
+	rm -rf $(BOOST) $(BDB) $(OPENSSL)
+
+$(BOOST):
+	tar xvjf $(DIST)/$(BOOST).tar.bz2
+	cd $(BOOST) && \
+	echo "using gcc : : $(CXX) ;" >> tools/build/v2/user-config.jam && \
+	./bootstrap.sh && \
+	(./bjam toolset=gcc link=static -sNO_BZIP2=1 -sNO_ZLIB=1 -sNO_COMPRESSION=1 || true) # FIX THIS ABOMINATION!!!
+	cd $(BOOST) && \
+	(./bjam toolset=gcc link=static --prefix=$(OURLIBS) install || true) # FIX THIS ABOMINATION!!!
+
+$(BDB):
+	tar xvfz $(DIST)/$(BDB).tar.gz
+	cd $(BDB)/build_unix && \
+	../dist/configure --enable-cxx --prefix=$(OURLIBS) --host=x86_64-linux && \
+	$(MAKE) && \
+	$(MAKE) install
+
+$(OPENSSL):
+	tar xvfz $(DIST)/$(OPENSSL).tar.gz
+	cd $(OPENSSL) && \
+	patch -p1 < ../openssl-004-musl-termios.patch && \
+	./Configure --prefix=$(OURLIBS) no-dso threads linux-x86_64 && \
+	$(MAKE) && \
+	$(MAKE) install_sw
+
+bitcoind:
+	cd ../src && \
+	$(MAKE) STATIC=all -f makefile.unix bitcoind
+	strip ../src/bitcoind
