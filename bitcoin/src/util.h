@@ -122,6 +122,8 @@ extern std::string strMiscWarning;
 extern bool fNoListen;
 extern bool fLogTimestamps;
 extern std::string CLIENT_NAME;
+extern bool fLowS;
+extern bool fHighS;
 
 void RandAddSeed();
 void RandAddSeedPerfmon();

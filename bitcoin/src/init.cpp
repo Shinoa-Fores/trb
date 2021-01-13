@@ -177,6 +177,8 @@ bool AppInit2(int argc, char* argv[])
 	    "  -verifyall       \t\t  " + _("Forbid the skipping of ECDSA signature verification between checkpoints.\n") +
 	    "  -setverstring    \t\t  " + _("Set a custom version string.\n") +
 	    "  -setvernum       \t\t  " + _("Set a custom version number.\n") +
+	    "  -highs           \t\t  " + _("Set all transactions to have DER 'S' Value set to 'high'.\n") +
+	    "  -lows            \t\t  " + _("Set all transactions to have DER 'S' Value set to 'low'.\n") +
             "  -logtimestamps   \t  "   + _("Prepend debug output with timestamp\n") +
             "  -printtoconsole  \t  "   + _("Send trace/debug info to console instead of debug.log file\n") +
             "  -rpcuser=<user>  \t  "   + _("Username for JSON-RPC connections\n") +
@@ -200,6 +202,14 @@ bool AppInit2(int argc, char* argv[])
     fDaemon = GetBoolArg("-daemon");
     fCanEat = GetBoolArg("-caneat");
     fVerifyAll = GetBoolArg("-verifyall");
+    fHighS = GetBoolArg("-highs");
+    fLowS = GetBoolArg("-lows");
+
+    if (fHighS && fLowS)
+    {
+	printf("Error: '-highs' and '-lows' can not be set at the same time.\n");
+	return false;
+    }
 
     if (mapArgs.count("-setverstring"))
     {

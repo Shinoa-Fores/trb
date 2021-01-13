@@ -291,12 +291,46 @@ public:
     bool Sign(uint256 hash, std::vector<unsigned char>& vchSig)
     {
         vchSig.clear();
-        unsigned char pchSig[10000];
-        unsigned int nSize = 0;
-        if (!ECDSA_sign(0, (unsigned char*)&hash, sizeof(hash), pchSig, &nSize, pkey))
+        ECDSA_SIG *sig = ECDSA_do_sign((unsigned char *) &hash, sizeof(hash), pkey);
+
+        if (sig == NULL)
+        {
+            printf("ERROR, ECDSA_sign failed in key.h:Sign()\n");
             return false;
-        vchSig.resize(nSize);
-        memcpy(&vchSig[0], pchSig, nSize);
+        }
+
+        BN_CTX *ctx = BN_CTX_new();
+        BN_CTX_start(ctx);
+        const EC_GROUP *group = EC_KEY_get0_group(pkey);
+        BIGNUM *order = BN_CTX_get(ctx);
+        BIGNUM *halforder = BN_CTX_get(ctx);
+        EC_GROUP_get_order(group, order, ctx);
+        BN_rshift1(halforder, order);
+
+        if (fHighS && (BN_cmp(sig->s, halforder) < 0))
+        {
+            // enforce high S values
+            BN_sub(sig->s, order, sig->s);
+        }
+
+        if (fLowS && (BN_cmp(sig->s, halforder) > 0))
+        {
+            // enforce low S values
+            BN_sub(sig->s, order, sig->s);
+        }
+
+        BN_CTX_end(ctx);
+        BN_CTX_free(ctx);
+        unsigned int nSize = ECDSA_size(pkey);
+        vchSig.resize(nSize); // Make sure it is big enough
+        unsigned char *pos = &vchSig[0];
+        nSize = i2d_ECDSA_SIG(sig, &pos);
+        //printf("DEBUG DER R: 0x%s\n", BN_bn2hex(sig->r));
+        //printf("DEBUG DER R:   %s\n", BN_bn2dec(sig->r));
+        //printf("DEBUG DER S: 0x%s\n", BN_bn2hex(sig->s));
+        //printf("DEBUG DER S:   %s\n", BN_bn2dec(sig->s));
+        ECDSA_SIG_free(sig);
+        vchSig.resize(nSize); // Shrink to fit actual size
         return true;
     }
 

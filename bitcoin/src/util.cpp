@@ -32,6 +32,8 @@ bool fCommandLine = false;
 string strMiscWarning;
 bool fNoListen = false;
 bool fLogTimestamps = false;
+bool fLowS = false;
+bool fHighS = false;
 
 std::string CLIENT_NAME(DEFAULT_CLIENT_NAME);
 
