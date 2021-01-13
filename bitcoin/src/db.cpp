@@ -927,7 +927,6 @@ int CWalletDB::LoadWallet(CWallet* pwallet)
                 if (strKey == "fMinimizeOnClose")   ssValue >> fMinimizeOnClose;
                 if (strKey == "fUseProxy")          ssValue >> fUseProxy;
                 if (strKey == "addrProxy")          ssValue >> addrProxy;
-                if (fHaveUPnP && strKey == "fUseUPnP")           ssValue >> fUseUPnP;
             }
             else if (strType == "minversion")
             {
@@ -950,9 +949,6 @@ int CWalletDB::LoadWallet(CWallet* pwallet)
     printf("fMinimizeOnClose = %d\n", fMinimizeOnClose);
     printf("fUseProxy = %d\n", fUseProxy);
     printf("addrProxy = %s\n", addrProxy.ToString().c_str());
-    if (fHaveUPnP)
-        printf("fUseUPnP = %d\n", fUseUPnP);
-
 
     // Rewrite encrypted wallets of versions 0.4.0 and 0.5.0rc:
     if (fIsEncrypted && (nFileVersion == 40000 || nFileVersion == 50000))

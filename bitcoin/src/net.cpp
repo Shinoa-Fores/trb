@@ -14,12 +14,6 @@
 #include <string.h>
 #endif
 
-#ifdef USE_UPNP
-#include <miniupnpc/miniwget.h>
-#include <miniupnpc/miniupnpc.h>
-#include <miniupnpc/upnpcommands.h>
-#include <miniupnpc/upnperrors.h>
-#endif
 
 using namespace std;
 using namespace boost;
@@ -29,9 +23,6 @@ static const int MAX_OUTBOUND_CONNECTIONS = 8;
 void ThreadMessageHandler2(void* parg);
 void ThreadSocketHandler2(void* parg);
 void ThreadOpenConnections2(void* parg);
-#ifdef USE_UPNP
-void ThreadMapPort2(void* parg);
-#endif
 void ThreadDNSAddressSeed2(void* parg);
 bool OpenNetworkConnection(const CAddress& addrConnect);
 
@@ -1110,153 +1101,6 @@ void ThreadSocketHandler2(void* parg)
 
 
 
-#ifdef USE_UPNP
-void ThreadMapPort(void* parg)
-{
-    IMPLEMENT_RANDOMIZE_STACK(ThreadMapPort(parg));
-    try
-    {
-        vnThreadsRunning[5]++;
-        ThreadMapPort2(parg);
-        vnThreadsRunning[5]--;
-    }
-    catch (std::exception& e) {
-        vnThreadsRunning[5]--;
-        PrintException(&e, "ThreadMapPort()");
-    } catch (...) {
-        vnThreadsRunning[5]--;
-        PrintException(NULL, "ThreadMapPort()");
-    }
-    printf("ThreadMapPort exiting\n");
-}
-
-void ThreadMapPort2(void* parg)
-{
-    printf("ThreadMapPort started\n");
-
-    char port[6];
-    sprintf(port, "%d", GetListenPort());
-
-    const char * multicastif = 0;
-    const char * minissdpdpath = 0;
-    struct UPNPDev * devlist = 0;
-    char lanaddr[64];
-
-#ifndef UPNPDISCOVER_SUCCESS
-    /* miniupnpc 1.5 */
-    devlist = upnpDiscover(2000, multicastif, minissdpdpath, 0);
-#else
-    /* miniupnpc 1.6 */
-    int error = 0;
-    devlist = upnpDiscover(2000, multicastif, minissdpdpath, 0, 0, &error);
-#endif
-
-    struct UPNPUrls urls;
-    struct IGDdatas data;
-    int r;
-
-    r = UPNP_GetValidIGD(devlist, &urls, &data, lanaddr, sizeof(lanaddr));
-    if (r == 1)
-    {
-        if (!addrLocalHost.IsRoutable())
-        {
-            char externalIPAddress[40];
-            r = UPNP_GetExternalIPAddress(urls.controlURL, data.first.servicetype, externalIPAddress);
-            if(r != UPNPCOMMAND_SUCCESS)
-                printf("UPnP: GetExternalIPAddress() returned %d\n", r);
-            else
-            {
-                if(externalIPAddress[0])
-                {
-                    printf("UPnP: ExternalIPAddress = %s\n", externalIPAddress);
-                    CAddress addrExternalFromUPnP(externalIPAddress, 0, false, nLocalServices);
-                    if (addrExternalFromUPnP.IsRoutable())
-                        addrLocalHost = addrExternalFromUPnP;
-                }
-                else
-                    printf("UPnP: GetExternalIPAddress failed.\n");
-            }
-        }
-
-        string strDesc = "Bitcoin " + FormatFullVersion();
-#ifndef UPNPDISCOVER_SUCCESS
-        /* miniupnpc 1.5 */
-        r = UPNP_AddPortMapping(urls.controlURL, data.first.servicetype,
-                            port, port, lanaddr, strDesc.c_str(), "TCP", 0);
-#else
-        /* miniupnpc 1.6 */
-        r = UPNP_AddPortMapping(urls.controlURL, data.first.servicetype,
-                            port, port, lanaddr, strDesc.c_str(), "TCP", 0, "0");
-#endif
-
-        if(r!=UPNPCOMMAND_SUCCESS)
-            printf("AddPortMapping(%s, %s, %s) failed with code %d (%s)\n",
-                port, port, lanaddr, r, strupnperror(r));
-        else
-            printf("UPnP Port Mapping successful.\n");
-        int i = 1;
-        loop {
-            if (fShutdown || !fUseUPnP)
-            {
-                r = UPNP_DeletePortMapping(urls.controlURL, data.first.servicetype, port, "TCP", 0);
-                printf("UPNP_DeletePortMapping() returned : %d\n", r);
-                freeUPNPDevlist(devlist); devlist = 0;
-                FreeUPNPUrls(&urls);
-                return;
-            }
-            if (i % 600 == 0) // Refresh every 20 minutes
-            {
-#ifndef UPNPDISCOVER_SUCCESS
-                /* miniupnpc 1.5 */
-                r = UPNP_AddPortMapping(urls.controlURL, data.first.servicetype,
-                                    port, port, lanaddr, strDesc.c_str(), "TCP", 0);
-#else
-                /* miniupnpc 1.6 */
-                r = UPNP_AddPortMapping(urls.controlURL, data.first.servicetype,
-                                    port, port, lanaddr, strDesc.c_str(), "TCP", 0, "0");
-#endif
-
-                if(r!=UPNPCOMMAND_SUCCESS)
-                    printf("AddPortMapping(%s, %s, %s) failed with code %d (%s)\n",
-                        port, port, lanaddr, r, strupnperror(r));
-                else
-                    printf("UPnP Port Mapping successful.\n");;
-            }
-            Sleep(2000);
-            i++;
-        }
-    } else {
-        printf("No valid UPnP IGDs found\n");
-        freeUPNPDevlist(devlist); devlist = 0;
-        if (r != 0)
-            FreeUPNPUrls(&urls);
-        loop {
-            if (fShutdown || !fUseUPnP)
-                return;
-            Sleep(2000);
-        }
-    }
-}
-
-void MapPort(bool fMapPort)
-{
-    if (fUseUPnP != fMapPort)
-    {
-        fUseUPnP = fMapPort;
-        WriteSetting("fUseUPnP", fUseUPnP);
-    }
-    if (fUseUPnP && vnThreadsRunning[5] < 1)
-    {
-        if (!CreateThread(ThreadMapPort, NULL))
-            printf("Error: ThreadMapPort(ThreadMapPort) failed\n");
-    }
-}
-#else
-void MapPort(bool /* unused fMapPort */)
-{
-    // Intentionally left blank.
-}
-#endif
 
 
 
@@ -1872,10 +1716,6 @@ void StartNode(void* parg)
         if (!CreateThread(ThreadDNSAddressSeed, NULL))
             printf("Error: CreateThread(ThreadDNSAddressSeed) failed\n");
 
-    // Map ports with UPnP
-    if (fHaveUPnP)
-        MapPort(fUseUPnP);
-
     // Get addresses from IRC and advertise ours
     if (!CreateThread(ThreadIRCSeed, NULL))
         printf("Error: CreateThread(ThreadIRCSeed) failed\n");
@@ -1903,9 +1743,6 @@ bool StopNode()
     nTransactionsUpdated++;
     int64 nStart = GetTime();
     while (vnThreadsRunning[0] > 0 || vnThreadsRunning[1] > 0 || vnThreadsRunning[2] > 0 || vnThreadsRunning[3] > 0 || vnThreadsRunning[4] > 0
-#ifdef USE_UPNP
-        || vnThreadsRunning[5] > 0
-#endif
     )
     {
         if (GetTime() - nStart > 20)
@@ -1917,7 +1754,6 @@ bool StopNode()
     if (vnThreadsRunning[2] > 0) printf("ThreadMessageHandler still running\n");
     if (vnThreadsRunning[3] > 0) printf("ThreadBitcoinMiner still running\n");
     if (vnThreadsRunning[4] > 0) printf("ThreadRPCServer still running\n");
-    if (fHaveUPnP && vnThreadsRunning[5] > 0) printf("ThreadMapPort still running\n");
     if (vnThreadsRunning[6] > 0) printf("ThreadDNSAddressSeed still running\n");
     while (vnThreadsRunning[2] > 0 || vnThreadsRunning[4] > 0)
         Sleep(20);

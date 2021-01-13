@@ -188,13 +188,6 @@ bool AppInit2(int argc, char* argv[])
             "  -bantime=<n>     \t  "   + _("Number of seconds to keep misbehaving peers from reconnecting (default: 86400)\n") +
             "  -maxreceivebuffer=<n>\t  " + _("Maximum per-connection receive buffer, <n>*1000 bytes (default: 10000)\n") +
             "  -maxsendbuffer=<n>\t  "   + _("Maximum per-connection send buffer, <n>*1000 bytes (default: 10000)\n") +
-#ifdef USE_UPNP
-#if USE_UPNP
-            "  -noupnp          \t  "   + _("Don't attempt to use UPnP to map the listening port\n") +
-#else
-            "  -upnp            \t  "   + _("Attempt to use UPnP to map the listening port\n") +
-#endif
-#endif
             "  -paytxfee=<amt>  \t  "   + _("Fee per kB to add to transactions you send\n") +
 #if !defined(WIN32)
             "  -daemon          \t\t  " + _("Run in the background as a daemon and accept commands\n") +
@@ -460,8 +453,6 @@ bool AppInit2(int argc, char* argv[])
         SoftSetArg("-nolisten", true);
         SoftSetArg("-noirc", true);
         SoftSetArg("-nodnsseed", true);
-        SoftSetArg("-noupnp", true);
-        SoftSetArg("-upnp", false);
         SoftSetArg("-dns", false);
     }
 
@@ -469,10 +460,6 @@ bool AppInit2(int argc, char* argv[])
     fNoListen = GetBoolArg("-nolisten");
 
     // Command-line args override in-wallet settings:
-    if (mapArgs.count("-upnp"))
-        fUseUPnP = GetBoolArg("-upnp");
-    else if (mapArgs.count("-noupnp"))
-        fUseUPnP = !GetBoolArg("-noupnp");
 
     if (!fNoListen)
     {
