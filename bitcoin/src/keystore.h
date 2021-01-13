@@ -28,6 +28,15 @@ public:
     // This may succeed even if GetKey fails (e.g., encrypted wallets)
     virtual bool GetPubKey(const CBitcoinAddress &address, std::vector<unsigned char>& vchPubKeyOut) const;
 
+    virtual bool GetSecret(const CBitcoinAddress &address, CSecret& vchSecret) const
+    {
+        CKey key;
+        if (!GetKey(address, key))
+            return false;
+        vchSecret = key.GetSecret();
+        return true;
+    }
+
     // Generate a new key, and add it to the store
     virtual std::vector<unsigned char> GenerateNewKey();
 };

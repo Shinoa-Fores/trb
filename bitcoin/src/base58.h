@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 #include "bignum.h"
+#include "key.h"
 
 static const char* pszBase58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
@@ -312,6 +313,34 @@ public:
         uint160 hash160;
         memcpy(&hash160, &vchData[0], 20);
         return hash160;
+    }
+};
+
+/** A base58-encoded secret key */
+class CBitcoinSecret : public CBase58Data
+{
+public:
+    void SetSecret(const CSecret& vchSecret)
+    { 
+        assert(vchSecret.size() == 32);
+        SetData(128, &vchSecret[0], vchSecret.size());
+    }
+
+    CSecret GetSecret()
+    {
+        CSecret vchSecret;
+        vchSecret.resize(32);
+        memcpy(&vchSecret[0], &vchData[0], 32);
+        return vchSecret;
+    }
+
+    CBitcoinSecret(const CSecret& vchSecret)
+    {
+        SetSecret(vchSecret);
+    }
+
+    CBitcoinSecret()
+    {
     }
 };
 

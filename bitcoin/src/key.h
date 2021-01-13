@@ -14,7 +14,6 @@
 
 #include "serialize.h"
 #include "uint256.h"
-#include "base58.h"
 
 // secp160k1
 // const unsigned int PRIVATE_KEY_SIZE = 192;
@@ -417,12 +416,6 @@ public:
         if (GetPubKey() != key.GetPubKey())
             return false;
         return true;
-    }
-
-    // Get the address corresponding to this key
-    CBitcoinAddress GetAddress() const
-    {
-        return CBitcoinAddress(GetPubKey());
     }
 
     bool IsValid()

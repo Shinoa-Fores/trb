@@ -7,6 +7,7 @@
 #include "db.h"
 #include "net.h"
 #include "init.h"
+#include "util.h"
 #undef printf
 #include <boost/asio.hpp>
 #include <boost/iostreams/concepts.hpp>
@@ -584,7 +585,7 @@ Value verifymessage(const Array& params, bool fHelp)
     if (!key.SetCompactSignature(Hash(ss.begin(), ss.end()), vchSig))
         return false;
 
-    return (key.GetAddress() == addr);
+    return (CBitcoinAddress(key.GetPubKey()) == addr);
 }
 
 
@@ -1838,6 +1839,60 @@ Value eatblock(const Array& params, bool fHelp)
 } // ... but will return 'false' if we already have the block.
 
 
+Value importprivkey(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() < 1 || params.size() > 2)
+        throw runtime_error(
+            "importprivkey <bitcoinprivkey> [label]\n"
+            "Adds a private key (as returned by dumpprivkey) to your wallet.");
+
+    string strSecret = params[0].get_str();
+    string strLabel = "";
+    if (params.size() > 1)
+        strLabel = params[1].get_str();
+    CBitcoinSecret vchSecret;
+    bool fGood = vchSecret.SetString(strSecret);
+
+    if (!fGood) throw JSONRPCError(-5,"Invalid private key");
+
+    CKey key;
+    CSecret secret = vchSecret.GetSecret();
+    key.SetSecret(secret);
+    CBitcoinAddress vchAddress = CBitcoinAddress(key.GetPubKey());
+
+    CRITICAL_BLOCK(cs_main)
+    CRITICAL_BLOCK(pwalletMain->cs_wallet)
+    {
+        pwalletMain->MarkDirty();
+        pwalletMain->SetAddressBookName(vchAddress, strLabel);
+
+        if (!pwalletMain->AddKey(key))
+            throw JSONRPCError(-4,"Error adding key to wallet");
+
+        pwalletMain->ScanForWalletTransactions(pindexGenesisBlock, true);
+        pwalletMain->ReacceptWalletTransactions();
+    }
+
+    return Value::null;
+}
+
+Value dumpprivkey(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() != 1)
+        throw runtime_error(
+            "dumpprivkey <bitcoinaddress>\n"
+            "Reveals the private key corresponding to <bitcoinaddress>.");
+
+    string strAddress = params[0].get_str();
+    CBitcoinAddress address;
+    if (!address.SetString(strAddress))
+        throw JSONRPCError(-5, "Invalid bitcoin address");
+    CSecret vchSecret;
+    if (!pwalletMain->GetSecret(address, vchSecret))
+        throw JSONRPCError(-4,"Private key for address " + strAddress + " is not known");
+    return CBitcoinSecret(vchSecret).ToString();
+}
+
 
 //
 // Call Table
@@ -1887,6 +1942,8 @@ pair<string, rpcfn_type> pCallTable[] =
     make_pair("listsinceblock",        &listsinceblock),
     make_pair("dumpblock",              &dumpblock),
     make_pair("eatblock",               &eatblock),
+    make_pair("importprivkey",          &importprivkey),
+    make_pair("dumpprivkey",            &dumpprivkey),
 };
 map<string, rpcfn_type> mapCallTable(pCallTable, pCallTable + sizeof(pCallTable)/sizeof(pCallTable[0]));
 
